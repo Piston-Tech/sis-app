@@ -137,7 +137,7 @@ const StudentFormModal = ({
               }
             >
               <option value="">- None -</option>
-              {["Basic", "Pro", "Elite"].map((c) => (
+              {["BASIC", "PRO", "ELITE"].map((c) => (
                 <option key={c} value={c}>
                   {c}
                 </option>
