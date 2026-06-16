@@ -6,6 +6,14 @@ import UserDetails from "./UserDetails";
 import Stats from "./Stats";
 import Student from "./Student";
 import Company from "./Company";
+import Transaction, { CreateTransactionData } from "./Transaction";
+import Enrollment, { CreateEnrollmentData } from "./Enrollment";
+import Course from "./Course";
+import Class from "./Class";
+import Session from "./Session";
+import Tier from "./Tier";
+import SelectedClassSearch from "./SelectedClassSearch";
+import Payment from "./Payment";
 
 export enum UserRole {
   JOB_SEEKER = "JOB_SEEKER",
@@ -37,17 +45,6 @@ export interface User {
   progress: number;
 }
 
-export interface Course {
-  id: string;
-  title: string;
-  category: string;
-  progress: number;
-  thumbnail: string;
-  tierRequired: MembershipTier;
-  segments: UserRole[];
-  dripDate?: string;
-}
-
 export interface Resource {
   id: string;
   title: string;
@@ -77,9 +74,19 @@ export type {
   Stats,
   Student,
   Company,
+  Transaction,
+  CreateTransactionData,
+  Enrollment,
+  CreateEnrollmentData,
   GlobalState,
   LoginCredentials,
   SignupCredentials,
   AuthResponse,
   UserDetails,
+  Course,
+  Class,
+  Session,
+  Tier,
+  SelectedClassSearch,
+  Payment,
 };

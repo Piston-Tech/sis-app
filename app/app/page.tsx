@@ -1,378 +1,458 @@
 "use client";
 
-import React from "react";
-import {
-  Radar,
-  RadarChart,
-  PolarGrid,
-  PolarAngleAxis,
-  PolarRadiusAxis,
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  AreaChart,
-  Area,
-} from "recharts";
-import { MembershipTier, Student, UserRole } from "@/types";
 import { useAuth } from "@/hooks/useAuth";
 import AppLayout from "@/components/AppLayout";
+import { useEffect, useState } from "react";
+import ProgressRing from "@/components/ProgressRing";
+import {
+  CheckCircle2,
+  ChevronRight,
+  HelpCircle,
+  Layers,
+  Mail,
+  MapPin,
+  Phone,
+  Send,
+} from "lucide-react";
+import apiClient from "@/services/apiClient";
+import Link from "next/link";
 
-interface DashboardProps {
-  user: Student;
-}
-
-const LeadershipRadar = () => {
-  const data = [
-    { subject: "Communication", A: 120, fullMark: 150 },
-    { subject: "Strategy", A: 98, fullMark: 150 },
-    { subject: "Empathy", A: 86, fullMark: 150 },
-    { subject: "Decision Making", A: 99, fullMark: 150 },
-    { subject: "Coaching", A: 85, fullMark: 150 },
-    { subject: "Adaptability", A: 65, fullMark: 150 },
-  ];
-  return (
-    <div className="h-64">
-      <ResponsiveContainer width="100%" height="100%">
-        <RadarChart cx="50%" cy="50%" outerRadius="80%" data={data}>
-          <PolarGrid stroke="#e2e8f0" />
-          <PolarAngleAxis
-            dataKey="subject"
-            tick={{ fill: "#64748b", fontSize: 10, fontWeight: 700 }}
-          />
-          <Radar
-            name="Skills"
-            dataKey="A"
-            stroke="#2563eb"
-            fill="#3b82f6"
-            fillOpacity={0.6}
-          />
-        </RadarChart>
-      </ResponsiveContainer>
-    </div>
-  );
-};
-
-const KanbanBoard = () => {
-  const columns = [
-    { title: "Shortlist", count: 4, color: "bg-indigo-500" },
-    { title: "Technical", count: 1, color: "bg-amber-500" },
-    { title: "Partner", count: 0, color: "bg-emerald-500" },
-  ];
-  return (
-    <div className="space-y-4 mt-6">
-      {columns.map((col) => (
-        <div
-          key={col.title}
-          className="flex items-center gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-100 group hover:border-blue-200 transition-all"
-        >
-          <div className={`w-2 h-10 rounded-full ${col.color}`} />
-          <div className="flex-1">
-            <h5 className="text-[11px] font-black uppercase text-slate-400 tracking-widest">
-              {col.title}
-            </h5>
-            <p className="text-sm font-bold text-slate-900">
-              {col.count} Applications
-            </p>
-          </div>
-          <button className="p-2 rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-blue-600 transition-colors">
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M9 5l7 7-7 7"
-              />
-            </svg>
-          </button>
-        </div>
-      ))}
-    </div>
-  );
-};
-
-const TrainingROIData = [
-  { name: "W1", completion: 400, productivity: 240 },
-  { name: "W2", completion: 300, productivity: 139 },
-  { name: "W3", completion: 200, productivity: 980 },
-  { name: "W4", completion: 278, productivity: 390 },
-];
-
-const Dashboard: React.FC<DashboardProps> = () => {
+const UserDashboardPage = () => {
   const { currentUser: user } = useAuth();
+  const [tab, setTab] = useState("Overview");
+  const [data, setData] = useState({
+    student: null,
+    enrollments: [],
+    transactions: [],
+    sessions: [],
+    nextSession: null,
+    programs: [],
+    learningPath: {
+      id: "",
+      title: "",
+      goal: "",
+      milestones: [],
+    },
+    summary: {
+      totalPaid: 0,
+      totalOutstanding: 0,
+      attendanceRate: 0,
+      completionRate: 0,
+      creditsEarned: 0,
+      gpa: 0,
+    },
+  });
+
+  const [enrollments, setEnrollments] = useState<any[]>([]);
+
+  useEffect(() => {
+    apiClient.get("/students/enrollments").then((res) => {
+      setEnrollments(res.data.data);
+    });
+  }, []);
+
   if (!user) return null;
+
+  const mainProgram = {
+    id: "",
+    title: "",
+    courses: [], // Course IDs
+    progress: 0,
+    description: "",
+    thumbnail: "",
+  };
+
+  const summary = {
+    totalPaid: 0,
+    totalOutstanding: 0,
+    attendanceRate: 0,
+    completionRate: 0,
+    creditsEarned: 0,
+    gpa: 0,
+  };
+
+  const nextSession = { notes: "Next Class" };
+
+  const canJoin = false;
+  const timeLeft = null;
 
   return (
     <AppLayout>
-      <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-1000">
-        {/* Dynamic Role-Based Hero */}
-        <div className="relative p-10 bg-slate-900 rounded-[2.5rem] text-white overflow-hidden shadow-2xl">
-          <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
-            <div className="max-w-xl">
-              <div className="flex items-center gap-3 mb-6">
-                <span
-                  className={`px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest uppercase border ${
-                    user.membershipTier === MembershipTier.ELITE
-                      ? "bg-amber-500/10 text-amber-400 border-amber-500/30"
-                      : user.membershipTier === MembershipTier.PRO
-                        ? "bg-blue-500/10 text-blue-400 border-blue-500/30"
-                        : "bg-white/10 text-white/60 border-white/20"
-                  }`}
-                >
-                  {user.membershipTier || "No"} Membership
-                </span>
-                <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
-                <span className="text-[10px] font-black text-white/60 tracking-widest uppercase">
-                  Verified Account
-                </span>
-              </div>
-              <h1 className="text-4xl font-black tracking-tighter mb-4">
-                Hello, {user.firstName}!
-              </h1>
-              <p className="text-slate-400 text-lg font-medium leading-relaxed">
-                {user.persona === UserRole.JOB_SEEKER
-                  ? "You're 3 certifications away from your Dream PM role at Google."
-                  : user.persona === UserRole.SME_OWNER
-                    ? "Your business scalability score increased by 14% this month."
-                    : user.persona === UserRole.CORPORATE_ADMIN
-                      ? "42 new employees have successfully completed onboarding."
-                      : "Level up your executive presence with this week's Leadership workshop."}
+      <div className="space-y-8 animate-in fade-in duration-700">
+        {/* Course/Program Header */}
+        <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden mb-8">
+          <div className="p-8 md:p-12 border-b border-slate-50 dark:border-slate-800 flex flex-col md:flex-row md:items-end justify-between gap-6">
+            <div>
+              <p className="text-[10px] text-blue-500 font-black uppercase tracking-[0.2em] mb-4">
+                Current Program
               </p>
+              <h1 className="text-3xl md:text-5xl font-black text-slate-900 dark:text-white tracking-tighter max-w-2xl leading-none">
+                {mainProgram?.title || "General Studies - Professional Track"}
+              </h1>
             </div>
-
-            <div className="flex flex-col items-center p-6 bg-white/5 backdrop-blur-md rounded-3xl border border-white/10 min-w-[200px]">
-              <div className="text-[10px] font-black uppercase text-blue-400 mb-2 tracking-[0.2em]">
-                Current Streak
+            <div className="flex items-center gap-6">
+              <div className="text-right">
+                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">
+                  GPA
+                </p>
+                <p className="text-2xl font-black text-slate-900 dark:text-white">
+                  {summary.gpa?.toFixed(2)}
+                </p>
               </div>
-              <div className="text-4xl font-black mb-1">
-                12 <span className="text-lg opacity-40">Days</span>
-              </div>
-              <div className="w-full bg-white/10 h-1.5 rounded-full mt-4 overflow-hidden">
-                <div className="bg-blue-500 h-full w-4/5 shadow-[0_0_12px_rgba(59,130,246,0.8)]"></div>
+              <div className="text-right">
+                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">
+                  Credits Earned
+                </p>
+                <p className="text-2xl font-black text-slate-900 dark:text-white">
+                  {summary.creditsEarned}
+                </p>
               </div>
             </div>
           </div>
 
-          {/* Abstract shapes */}
-          <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-blue-600/10 to-transparent"></div>
-          <div className="absolute -right-20 -top-20 w-80 h-80 bg-blue-600/20 rounded-full blur-[100px]"></div>
+          <div className="px-8 py-4 flex items-center gap-8 overflow-x-auto scrollbar-hide">
+            {["Overview", "Support", "Media Center"].map((t) => (
+              <button
+                key={t}
+                onClick={() => setTab(t)}
+                className={`whitespace-nowrap pb-4 pt-4 px-2 text-[10px] font-black uppercase tracking-widest transition-all relative ${
+                  tab === t
+                    ? "text-blue-600"
+                    : "text-slate-400 hover:text-slate-600"
+                }`}
+              >
+                {t}
+                {tab === t && (
+                  <div className="absolute bottom-0 left-0 w-full h-1 bg-blue-600 rounded-full" />
+                )}
+              </button>
+            ))}
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {/* Learning & Skill Hub */}
-          <div className="md:col-span-2 bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
-            <div className="flex justify-between items-center mb-10">
-              <div>
-                <h3 className="text-xl font-black text-slate-900 tracking-tight">
-                  Active Learning Tracks
-                </h3>
-                <p className="text-sm text-slate-400 font-medium">
-                  Synced with P&F Global Curriculum
-                </p>
-              </div>
-              <button className="px-6 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-slate-800 transition-all shadow-xl shadow-slate-200">
-                View Catalog
-              </button>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              {[
-                {
-                  title: "Project Management Professional",
-                  progress: 78,
-                  tag: "PMP®",
-                  color: "from-blue-600 to-blue-400",
-                },
-                {
-                  title: "Advanced Business Analysis",
-                  progress: 42,
-                  tag: "IIBA®",
-                  color: "from-indigo-600 to-indigo-400",
-                },
-              ].map((course, i) => (
-                <div
-                  key={i}
-                  className="p-6 rounded-3xl border border-slate-100 bg-slate-50/40 hover:bg-white hover:shadow-xl hover:-translate-y-1 transition-all group"
-                >
-                  <div className="flex justify-between items-start mb-6">
-                    <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center font-black text-blue-600 shadow-sm text-xs border border-slate-100">
-                      {course.tag}
-                    </div>
-                    <div className="text-right">
-                      <span className="text-2xl font-black text-slate-900">
-                        {course.progress}%
-                      </span>
-                      <p className="text-[10px] text-slate-400 font-black uppercase">
-                        Complete
+        {tab === "Overview" && (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            {/* Left Column */}
+            <div className="lg:col-span-8 space-y-8">
+              {/* Ready for Class? */}
+              <section className="bg-slate-900 rounded-[3rem] p-10 text-white overflow-hidden relative group">
+                <div className="relative z-10">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
+                    <div className="max-w-md">
+                      <h3 className="text-3xl font-black tracking-tighter mb-4 leading-none">
+                        Ready for Class?
+                      </h3>
+                      <p className="text-slate-400 text-sm font-medium mb-8">
+                        {nextSession
+                          ? `Your next session "${nextSession.notes || "In-person training"}" is coming up soon.`
+                          : "You don't have any scheduled sessions today. Take this time to review your learning path or community discussions."}
                       </p>
+
+                      {nextSession && (
+                        <button
+                          disabled={!canJoin}
+                          className={`px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-xl ${
+                            canJoin
+                              ? "bg-blue-600 hover:scale-105 shadow-blue-600/30 animate-pulse"
+                              : "bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700"
+                          }`}
+                        >
+                          {canJoin
+                            ? "Join Live Session Now"
+                            : "Classroom Opens 15m Before"}
+                        </button>
+                      )}
+                    </div>
+
+                    {nextSession && (
+                      <div className="text-center p-8 bg-white/5 rounded-[2rem] border border-white/10 backdrop-blur-md">
+                        <p className="text-[10px] text-blue-400 font-black uppercase tracking-[0.2em] mb-4">
+                          Starts In
+                        </p>
+                        <div className="text-4xl font-black font-mono tracking-tighter mb-2">
+                          {timeLeft || "CALCULATING"}
+                        </div>
+                        <div className="w-full bg-white/10 h-1.5 rounded-full overflow-hidden mt-4">
+                          <div className="h-full bg-blue-500 w-2/3 animate-pulse" />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-blue-600/10 to-transparent" />
+              </section>
+
+              {/* Your Courses - April 2026 */}
+              <section className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden">
+                <div className="p-8 border-b border-slate-50 dark:border-slate-800 flex items-center justify-between">
+                  <div>
+                    <h3 className="text-xl font-black text-slate-900 dark:text-white">
+                      Your Courses - April 2026
+                    </h3>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">
+                      Previewing active and upcoming enrollments
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-6">
+                    <button
+                      onClick={() => {
+                        window.scrollTo({ top: 0, behavior: "smooth" });
+                        // We rely on the parent state update, but for better DX we can scroll
+                      }}
+                      className="text-[10px] font-black uppercase text-blue-600 tracking-[0.2em] hover:opacity-70 transition-opacity"
+                    >
+                      View All
+                    </button>
+                    <div className="flex gap-2 text-slate-400">
+                      <span className="text-[9px] font-black uppercase tracking-widest bg-slate-100 dark:bg-white/5 px-3 py-1 rounded-full">
+                        1 of 3
+                      </span>
                     </div>
                   </div>
-                  <h4 className="font-bold text-slate-900 text-lg leading-tight mb-6">
-                    {course.title}
-                  </h4>
-                  <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+                </div>
+                <div className="p-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {enrollments.slice(0, 3).map((e) => (
+                    <Link href={`/courses/enrollments/${e.enrollmentId}`}>
                     <div
-                      className={`h-full rounded-full transition-all duration-1000 bg-gradient-to-r ${course.color}`}
-                      style={{ width: `${course.progress}%` }}
+                      key={e.id}
+                      className="p-6 bg-slate-50 dark:bg-white/5 rounded-3xl border border-slate-100 dark:border-slate-800 group hover:border-blue-500/50 transition-all cursor-pointer flex flex-col justify-between"
+                    >
+                      <div className="mb-6">
+                        <div className="flex justify-between items-start mb-4">
+                          <span
+                            className={`text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full ${
+                              e.status === "Enrolled"
+                                ? "bg-blue-100 text-blue-600"
+                                : "bg-emerald-100 text-emerald-600"
+                            }`}
+                          >
+                            {e.status === "Enrolled" ? "Upcoming" : "Ongoing"}
+                          </span>
+                        </div>
+                        <h4 className="text-sm font-black text-slate-900 dark:text-white mb-4 uppercase tracking-tight line-clamp-2 leading-tight">
+                          {e.class?.customClass?.title ||
+                            e.class?.course?.title}
+                        </h4>
+                      </div>
+                      <div className="flex items-center justify-between pt-4 border-t border-slate-200 dark:border-white/5">
+                        <div className="flex items-center gap-2">
+                          <div className="w-6 h-6 rounded-lg bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center">
+                            <MapPin className="w-3 h-3 text-blue-600" />
+                          </div>
+                          <span className="text-[9px] font-bold text-slate-500 uppercase">
+                            {e.delivery}
+                          </span>
+                        </div>
+                        <ChevronRight className="w-4 h-4 text-slate-300 group-hover:translate-x-1 transition-transform" />
+                      </div>
+                    </div>
+                    </Link>
+                  ))}
+                </div>
+              </section>
+            </div>
+
+            {/* Right Column */}
+            <div className="lg:col-span-4 space-y-8">
+              {/* Academic Progress */}
+              <section className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-10 border border-slate-100 dark:border-slate-800 shadow-sm">
+                <h3 className="text-xl font-black text-slate-900 dark:text-white mb-8">
+                  Academic Progress
+                </h3>
+                <div className="flex flex-col items-center gap-12">
+                  <div className="grid grid-cols-2 gap-8 w-full">
+                    <ProgressRing
+                      percentage={summary.attendanceRate}
+                      color="#3b82f6"
+                      label="Attendance"
+                    />
+                    <ProgressRing
+                      percentage={89}
+                      color="#10b981"
+                      label="Tuition Paid"
+                    />
+                  </div>
+                  <div className="w-full h-px bg-slate-100 dark:bg-slate-800" />
+                  <div className="w-full flex justify-center">
+                    <ProgressRing
+                      percentage={summary.completionRate || 0}
+                      color="#8b5cf6"
+                      label="Pathway Completion"
                     />
                   </div>
                 </div>
-              ))}
+              </section>
+
+              {/* Checklist */}
+              <section className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-8 border border-slate-100 dark:border-slate-800 shadow-sm">
+                <h3 className="text-xl font-black text-slate-900 dark:text-white mb-6">
+                  Course Checklist
+                </h3>
+                <div className="space-y-4">
+                  {[
+                    { label: "Register for April Term", done: true },
+                    { label: "Submit PMP Application", done: true },
+                    { label: "Pay Term Tuition", done: true },
+                    { label: "Review Course Syllabus", done: false },
+                  ].map((item, i) => (
+                    <div key={i} className="flex items-center gap-4 group">
+                      <div
+                        className={`w-6 h-6 rounded-lg flex items-center justify-center border-2 transition-all ${
+                          item.done
+                            ? "bg-emerald-500 border-emerald-500"
+                            : "border-slate-200 dark:border-slate-800"
+                        }`}
+                      >
+                        {item.done && (
+                          <CheckCircle2 className="w-4 h-4 text-white" />
+                        )}
+                      </div>
+                      <span
+                        className={`text-xs font-bold ${item.done ? "text-slate-400 line-through" : "text-slate-700 dark:text-slate-300"}`}
+                      >
+                        {item.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </section>
             </div>
           </div>
+        )}
 
-          {/* Dynamic Contextual Widget */}
-          <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm flex flex-col">
-            <h3 className="text-xl font-black text-slate-900 mb-2">
-              {user.persona === UserRole.JOB_SEEKER
-                ? "Career Pipeline"
-                : user.persona === UserRole.SME_OWNER
-                  ? "Growth Index"
-                  : user.persona === UserRole.CORPORATE_ADMIN
-                    ? "Department ROI"
-                    : "Competency Profile"}
-            </h3>
-            <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-6">
-              Real-time Performance Sync
-            </p>
-
-            <div className="flex-1 flex flex-col justify-center">
-              {user.persona === UserRole.PROFESSIONAL && <LeadershipRadar />}
-              {user.persona === UserRole.JOB_SEEKER && <KanbanBoard />}
-              {user.persona === UserRole.SME_OWNER && (
-                <div className="space-y-6">
-                  <div className="p-6 bg-emerald-50 rounded-3xl border border-emerald-100 shadow-sm group hover:scale-105 transition-transform">
-                    <p className="text-[10px] text-emerald-600 font-black uppercase tracking-[0.2em] mb-2">
-                      Projected MRR
+        {tab === "Support" && (
+          <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
+            <div className="xl:col-span-5 space-y-8">
+              {enrollments.map((e, idx) => (
+                <section
+                  key={`advisor-${e.id}`}
+                  className="bg-indigo-600 rounded-[3rem] p-10 text-white shadow-2xl relative overflow-hidden"
+                >
+                  <div className="relative z-10">
+                    <div className="flex items-center gap-6 mb-10">
+                      <div className="w-20 h-20 bg-white/20 rounded-3xl border border-white/20 flex items-center justify-center text-3xl font-black">
+                        {e.cba?.[0]}
+                      </div>
+                      <div>
+                        <h3 className="text-2xl font-black tracking-tighter">
+                          {e.cba}
+                        </h3>
+                        <p className="text-indigo-200 text-xs font-bold uppercase tracking-widest">
+                          Academic Advisor
+                        </p>
+                        <p className="text-[10px] text-white/60 font-medium">
+                          For:{" "}
+                          {e.class?.customClass?.title ||
+                            e.class?.course?.title}
+                        </p>
+                      </div>
+                    </div>
+                    <p className="text-sm font-medium leading-relaxed text-indigo-100 mb-10">
+                      Your Success Team is here to ensure you extract maximum
+                      value from the P&F training curriculum. Reach out for help
+                      with schedules, materials, or certification.
                     </p>
-                    <p className="text-3xl font-black text-emerald-900 tracking-tighter">
-                      ₦2.4M
-                    </p>
-                    <div className="flex items-center gap-1 text-emerald-600 text-[10px] font-black mt-2">
-                      <svg
-                        className="w-3 h-3"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                      >
-                        <path d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" />
-                      </svg>
-                      +12.4%
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <button className="flex items-center justify-center gap-4 p-4 bg-white/10 rounded-2xl border border-white/10 hover:bg-white/20 transition-all">
+                        <Phone className="w-4 h-4" />
+                        <span className="text-xs font-black uppercase tracking-widest">
+                          WhatsApp
+                        </span>
+                      </button>
+                      <button className="flex items-center justify-center gap-4 p-4 bg-white/10 rounded-2xl border border-white/10 hover:bg-white/20 transition-all">
+                        <Mail className="w-4 h-4" />
+                        <span className="text-xs font-black uppercase tracking-widest">
+                          Email
+                        </span>
+                      </button>
                     </div>
                   </div>
-                  <div className="p-6 bg-blue-50 rounded-3xl border border-blue-100 shadow-sm group hover:scale-105 transition-transform">
-                    <p className="text-[10px] text-blue-600 font-black uppercase tracking-[0.2em] mb-2">
-                      Employee Retention
-                    </p>
-                    <p className="text-3xl font-black text-blue-900 tracking-tighter">
-                      94%
-                    </p>
-                    <p className="text-[10px] text-blue-400 mt-2 font-bold uppercase">
-                      Optimal Range
-                    </p>
-                  </div>
-                </div>
-              )}
-              {user.persona === UserRole.CORPORATE_ADMIN && (
-                <div className="h-64">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
-                      data={TrainingROIData}
-                      margin={{ top: 0, right: 0, left: -20, bottom: 0 }}
+                  <div className="absolute -right-20 -bottom-20 w-64 h-64 bg-indigo-500 rounded-full blur-[80px]" />
+                </section>
+              ))}
+
+              <section className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-8 border border-slate-100 dark:border-slate-800 shadow-sm">
+                <h4 className="text-lg font-black text-slate-900 dark:text-white mb-6 flex items-center gap-3">
+                  <HelpCircle className="w-5 h-5 text-blue-600" />
+                  Frequently Asked
+                </h4>
+                <div className="space-y-3">
+                  {[
+                    "When do I get my certificate?",
+                    "How to reschedule a session?",
+                    "Exam eligibility requirements",
+                  ].map((faq) => (
+                    <button
+                      key={faq}
+                      className="w-full flex items-center justify-between p-4 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-white/10 group"
                     >
-                      <XAxis dataKey="name" hide />
-                      <Tooltip
-                        cursor={{ fill: "#f1f5f9", radius: 8 }}
-                        contentStyle={{
-                          borderRadius: "12px",
-                          border: "none",
-                          boxShadow: "0 10px 15px -3px rgba(0,0,0,0.1)",
-                        }}
-                      />
-                      <Bar
-                        dataKey="completion"
-                        fill="#2563eb"
-                        radius={[8, 8, 8, 8]}
-                        barSize={20}
-                      />
-                      <Bar
-                        dataKey="productivity"
-                        fill="#cbd5e1"
-                        radius={[8, 8, 8, 8]}
-                        barSize={20}
-                      />
-                    </BarChart>
-                  </ResponsiveContainer>
+                      <span className="text-xs font-bold text-slate-600 dark:text-slate-400 group-hover:text-blue-600 transition-colors">
+                        {faq}
+                      </span>
+                      <ChevronRight className="w-4 h-4 text-slate-300 group-hover:translate-x-1 transition-transform" />
+                    </button>
+                  ))}
                 </div>
-              )}
+              </section>
             </div>
 
-            <button className="w-full mt-8 py-4 bg-slate-50 text-slate-500 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-100 transition-all">
-              Download Detailed Analytics
-            </button>
-          </div>
+            <div className="xl:col-span-7 bg-white dark:bg-slate-900 rounded-[3rem] p-10 border border-slate-100 dark:border-slate-800 shadow-sm">
+              <h4 className="text-xl font-black text-slate-900 dark:text-white mb-2 flex items-center gap-3">
+                <Send className="w-6 h-6 text-indigo-600" />
+                Submit Client Support Ticket
+              </h4>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mb-10 font-bold uppercase tracking-widest">
+                Direct link to Admin Panel CRT
+              </p>
 
-          {/* Global Resource Access */}
-          <div className="md:col-span-3 bg-slate-900 rounded-[3rem] p-10 relative overflow-hidden group">
-            <div className="relative z-10 flex flex-col lg:flex-row lg:items-center gap-12">
-              <div className="flex-1">
-                <div className="inline-block px-4 py-1.5 bg-blue-600 rounded-full text-[10px] font-black tracking-widest mb-6">
-                  UNLIMITED REPOSITORY
+              <form className="space-y-6">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest px-2">
+                    Request Category
+                  </label>
+                  <select className="w-full p-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-bold focus:ring-2 focus:ring-indigo-600/20 outline-none">
+                    <option>Finance & Receipts</option>
+                    <option>LMS Access Issues</option>
+                    <option>Course Transfer</option>
+                    <option>Certification Correction</option>
+                  </select>
                 </div>
-                <h2 className="text-4xl font-black text-white tracking-tight mb-6 leading-[1.1]">
-                  Elite Library: 2,500+ Toolkits, Templates & Market Reports.
-                </h2>
-                <p className="text-slate-400 text-lg font-medium leading-relaxed max-w-2xl mb-10">
-                  Access the full Piston & Fusion intellectual property
-                  database. From Agile frameworks to SME scaling blueprints,
-                  everything you need is one click away.
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest px-2">
+                    Details (Be Specific)
+                  </label>
+                  <textarea
+                    rows={6}
+                    placeholder="Tell our administrators how we can help you..."
+                    className="w-full p-6 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-[2rem] text-xs font-medium focus:ring-2 focus:ring-indigo-600/20 outline-none resize-none"
+                  />
+                </div>
+                <button className="w-full py-5 bg-indigo-600 text-white rounded-[2rem] font-black text-xs uppercase tracking-[0.2em] shadow-xl hover:-translate-y-1 transition-all">
+                  Send Request to Academy CRT
+                </button>
+                <p className="text-center text-[10px] text-slate-400 font-bold uppercase tracking-widest">
+                  Instant Sync with Admin CRM Department
                 </p>
-                <div className="flex flex-wrap gap-4">
-                  <button className="px-10 py-5 bg-white text-slate-900 rounded-[1.5rem] font-black text-sm hover:bg-blue-50 transition-all shadow-2xl hover:-translate-y-1">
-                    Open Resource Cloud
-                  </button>
-                  <button className="px-10 py-5 bg-white/10 text-white rounded-[1.5rem] font-black text-sm hover:bg-white/20 transition-all border border-white/10">
-                    Browse Free Assets
-                  </button>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4 w-full lg:w-96">
-                {[
-                  { label: "Downloads", val: "14.2k" },
-                  { label: "Experts", val: "120+" },
-                  { label: "Templates", val: "2.5k" },
-                  { label: "Daily Syncs", val: "400" },
-                ].map((stat) => (
-                  <div
-                    key={stat.label}
-                    className="p-6 bg-white/5 backdrop-blur-md rounded-3xl border border-white/10"
-                  >
-                    <p className="text-2xl font-black text-white">{stat.val}</p>
-                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
-                      {stat.label}
-                    </p>
-                  </div>
-                ))}
-              </div>
+              </form>
             </div>
-
-            {/* Visual Polish */}
-            <div className="absolute top-0 right-0 w-1/3 h-full bg-gradient-to-l from-blue-600/20 to-transparent pointer-events-none"></div>
-            <div className="absolute -left-20 -bottom-20 w-96 h-96 bg-blue-600/10 rounded-full blur-[120px]"></div>
           </div>
-        </div>
+        )}
+
+        {tab === "Media Center" && (
+          <div className="p-20 text-center bg-white dark:bg-slate-900 rounded-[3rem] border border-slate-100 dark:border-slate-800 border-dashed">
+            <Layers className="w-16 h-16 text-slate-200 mx-auto mb-6" />
+            <h3 className="text-xl font-black text-slate-900 dark:text-white mb-2">
+              Media Center Coming Soon
+            </h3>
+            <p className="text-slate-500 text-sm max-w-md mx-auto">
+              This repository will contain session recordings, webinar archives,
+              and training toolkits.
+            </p>
+          </div>
+        )}
       </div>
     </AppLayout>
   );
 };
 
-export default Dashboard;
+export default UserDashboardPage;

@@ -7,6 +7,8 @@ import { AppNotification } from "@/types";
 import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import Loading from "@/app/app/loading";
+import Link from "next/link";
+import { User } from "lucide-react";
 
 const AppLayout = ({ children }: { children: ReactNode }) => {
   const router = useRouter();
@@ -249,25 +251,30 @@ const AppLayout = ({ children }: { children: ReactNode }) => {
               />
             )}
 
-            <div className="flex items-center gap-4 pl-4 border-l border-slate-200">
-              <div className="text-right hidden sm:block">
-                <p className="text-sm font-black text-slate-900 leading-tight">
-                  {user.firstName} {user.lastName}
-                </p>
-                <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest">
-                  {/* {user.role.replace("_", " ")} */}
-                  {user.persona.replace("_", " ")}
-                </p>
+            <Link href="/profile">
+              <div className="flex items-center gap-4 pl-4 border-l border-slate-200">
+                <div className="text-right hidden sm:block">
+                  <p className="text-sm font-black text-slate-900 leading-tight">
+                    {user.firstName} {user.lastName}
+                  </p>
+                  <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest">
+                    {/* {user.role.replace("_", " ")} */}
+                    {user.persona.replace("_", " ")}
+                  </p>
+                </div>
+                <div className="relative group">
+                  {/* <img
+                    src={`https://picsum.photos/seed/${user.id}/80/80`}
+                    className="h-11 w-11 rounded-2xl border-2 border-white shadow-lg cursor-pointer group-hover:scale-105 transition-transform"
+                    alt="Avatar"
+                  /> */}
+                  <div className="flex items-center justify-center h-11 w-11 rounded-2xl border-2 border-white shadow-lg cursor-pointer group-hover:scale-105 transition-transform">
+                    <User className="w-6 h-6 text-blue-600" />
+                  </div>
+                  <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>
+                </div>
               </div>
-              <div className="relative group">
-                <img
-                  src={`https://picsum.photos/seed/${user.id}/80/80`}
-                  className="h-11 w-11 rounded-2xl border-2 border-white shadow-lg cursor-pointer group-hover:scale-105 transition-transform"
-                  alt="Avatar"
-                />
-                <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>
-              </div>
-            </div>
+            </Link>
           </div>
         </header>
 

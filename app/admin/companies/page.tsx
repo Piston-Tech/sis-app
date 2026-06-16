@@ -4,13 +4,11 @@ import Card from "@/components/Card";
 import {
   Plus,
   Search,
-  Filter,
-  Download,
   ChevronRight,
   Building2,
 } from "lucide-react";
 import { AnimatePresence } from "motion/react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import AdminLayout from "@/components/AdminLayout";
 import useCompany from "@/hooks/useCompany";
 import CompanyFormModal from "./CompanyFormModal";

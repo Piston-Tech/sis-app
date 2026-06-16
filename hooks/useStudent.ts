@@ -25,7 +25,7 @@ const useStudent = (params: UseStudentProps | undefined = undefined) => {
     try {
       const response = await apiClient.get(`/admin/students${queryString}`);
       console.log("Fetched students:", response.data);
-      setStudents(response.data.students);
+      setStudents(response.data.data);
     } catch (error) {
       console.error("Error fetching students:", error);
     }

@@ -1,7 +1,6 @@
 import apiClient from "@/services/apiClient";
 import { Student } from "@/types";
-import createSlug from "@/utils/createSlug";
-import { MouseEventHandler, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import useCompany from "./useCompany";
 
 type StudentForm = Omit<
@@ -79,7 +78,7 @@ const useStudentForm = (student: Student | null, close: () => void) => {
     setLoading(true);
 
     try {
-      const { data } = await apiClient.put("/students", formData);
+      const { data } = await apiClient.put("/admin/students", formData);
 
       console.log(data);
 

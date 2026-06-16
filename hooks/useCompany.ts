@@ -25,7 +25,7 @@ const useCompany = (params: UseCompanyProps | undefined = undefined) => {
     try {
       const response = await apiClient.get(`/admin/companies${queryString}`);
       console.log("Fetched companies:", response.data);
-      setCompanies(response.data.companies);
+      setCompanies(response.data.data);
     } catch (error) {
       console.error("Error fetching companies:", error);
     }

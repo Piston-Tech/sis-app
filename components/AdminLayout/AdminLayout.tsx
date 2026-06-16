@@ -14,13 +14,14 @@ import {
   Settings,
   LogOut,
   Menu,
+  Banknote,
   X,
-  Link,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import SidebarItem from "@/components/SidebarItem";
 import cn from "@/utils/cn";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
+import Link from "next/link";
 
 const AdminLayout = ({ children }: { children: React.ReactNode }) => {
   const { logout } = useAdminAuth();
@@ -34,6 +35,7 @@ const AdminLayout = ({ children }: { children: React.ReactNode }) => {
     { to: "/students", icon: Users, label: "Students" },
     { to: "/companies", icon: Building2, label: "Companies" },
     { to: "/transactions", icon: CreditCard, label: "Transactions" },
+    { to: "/payments", icon: Banknote, label: "Payments" },
     { to: "/attendance", icon: CheckSquare, label: "Attendance" },
     { to: "/reports", icon: BarChart3, label: "Reports" },
     { to: "/settings", icon: Settings, label: "Settings" },
@@ -60,7 +62,11 @@ const AdminLayout = ({ children }: { children: React.ReactNode }) => {
             <SidebarItem
               key={item.to}
               {...item}
-              active={pathname === item.to}
+              active={
+                item.to === "/"
+                  ? pathname === item.to
+                  : pathname.startsWith(item.to)
+              }
             />
           ))}
         </nav>
@@ -133,7 +139,7 @@ const AdminLayout = ({ children }: { children: React.ReactNode }) => {
               {navigation.map((item) => (
                 <Link
                   key={item.to}
-                  to={item.to}
+                  href={item.to}
                   onClick={() => setIsMobileMenuOpen(false)}
                   className={cn(
                     "flex items-center gap-4 px-4 py-4 rounded-xl text-lg font-medium",

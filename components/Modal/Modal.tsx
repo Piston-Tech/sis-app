@@ -10,7 +10,7 @@ const Modal = ({
   onClose: () => void;
   children: React.ReactNode;
 }) => (
-  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4">
+  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-100 p-4">
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
@@ -25,7 +25,7 @@ const Modal = ({
           <X size={20} />
         </button>
       </div>
-      <div className="p-6">{children}</div>
+      <div className="max-h-[80vh] overflow-auto p-6">{children}</div>
     </motion.div>
   </div>
 );

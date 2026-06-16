@@ -11,11 +11,11 @@ import {
   BookOpen,
   Calendar,
   CreditCard,
-  Link,
   Plus,
   FileText,
   CheckSquare,
 } from "lucide-react";
+import Link from "next/link";
 import { useState, useEffect } from "react";
 
 const AdminDashboard = () => {
@@ -109,7 +109,7 @@ const AdminDashboard = () => {
             subtitle="Latest payments and enrollments"
             action={
               <Link
-                to="/transactions"
+                href="/transactions"
                 className="text-xs font-semibold text-black hover:underline"
               >
                 View All

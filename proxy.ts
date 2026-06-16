@@ -52,7 +52,7 @@ export function proxy(request: NextRequest) {
 // Optionally, use a matcher to restrict when the proxy runs
 export const config = {
   matcher: [
-    "/((?!api|_next/static|_next/image|favicon.ico).*)",
+    "/((?!api|_next/static|_next/image|favicon.ico|.*\\..*).*)",
     "/admin/:path*",
     "/profile/:path*",
   ],

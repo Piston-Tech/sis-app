@@ -1,0 +1,2410 @@
+{
+  "categories": [
+    {
+      "name": "Customer Management Courses",
+      "subcategories": [
+        {
+          "name": "Call Center Operations",
+          "professions": [
+            "CRM Manager",
+            "Call Center Agent",
+            "Client Relationship Executive",
+            "Customer Service Representative",
+            "Support Specialist"
+          ],
+          "interests": [
+            "call",
+            "call center training",
+            "center",
+            "client relations",
+            "crm",
+            "customer satisfaction",
+            "loyalty",
+            "retention",
+            "support"
+          ]
+        },
+        {
+          "name": "Customer Relationship & Retention",
+          "professions": [
+            "CRM Manager",
+            "Call Center Agent",
+            "Client Relationship Executive",
+            "Customer Service Representative",
+            "Support Specialist"
+          ],
+          "interests": [
+            "boosting",
+            "business",
+            "client relations",
+            "crm",
+            "customer",
+            "customer satisfaction",
+            "growth",
+            "loyalty",
+            "management",
+            "relationship",
+            "retention",
+            "strategies",
+            "support"
+          ]
+        },
+        {
+          "name": "Customer Service Management",
+          "professions": [
+            "CRM Manager",
+            "Call Center Agent",
+            "Client Relationship Executive",
+            "Customer Service Representative",
+            "Support Specialist"
+          ],
+          "interests": [
+            "client relations",
+            "crm",
+            "customer",
+            "customer satisfaction",
+            "issues",
+            "level",
+            "loyalty",
+            "managers",
+            "managing",
+            "planning",
+            "retention",
+            "senior",
+            "service",
+            "strategies",
+            "support",
+            "techniques"
+          ]
+        },
+        {
+          "name": "IT Technical Support",
+          "professions": [
+            "CRM Manager",
+            "Call Center Agent",
+            "Client Relationship Executive",
+            "Customer Service Representative",
+            "Support Specialist"
+          ],
+          "interests": [
+            "client relations",
+            "crm",
+            "customer satisfaction",
+            "loyalty",
+            "retention",
+            "specialists",
+            "support",
+            "tech"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Data Management Courses",
+      "subcategories": [
+        {
+          "name": "Business Intelligence & Reporting",
+          "professions": [
+            "Business Intelligence Analyst",
+            "Data Analyst",
+            "Data Scientist",
+            "Database Administrator",
+            "Reporting Specialist"
+          ],
+          "interests": [
+            "analysis",
+            "analyst",
+            "analytics",
+            "business",
+            "data",
+            "data visualization",
+            "excel",
+            "intelligence",
+            "junior",
+            "microsoft",
+            "power",
+            "power bi",
+            "python",
+            "reporting",
+            "senior",
+            "statistics"
+          ]
+        },
+        {
+          "name": "Core Data Analysis",
+          "professions": [
+            "Business Intelligence Analyst",
+            "Data Analyst",
+            "Data Scientist",
+            "Database Administrator",
+            "Reporting Specialist"
+          ],
+          "interests": [
+            "analysis",
+            "analytics",
+            "data",
+            "data visualization",
+            "excel",
+            "foundation",
+            "management",
+            "power bi",
+            "python",
+            "reporting",
+            "statistics"
+          ]
+        },
+        {
+          "name": "Data Science & Advanced Analytics",
+          "professions": [
+            "Business Intelligence Analyst",
+            "Data Analyst",
+            "Data Scientist",
+            "Database Administrator",
+            "Reporting Specialist"
+          ],
+          "interests": [
+            "analytics",
+            "data",
+            "data visualization",
+            "excel",
+            "power bi",
+            "python",
+            "reporting",
+            "science",
+            "statistics",
+            "using"
+          ]
+        },
+        {
+          "name": "Statistical Data Analysis",
+          "professions": [
+            "Business Intelligence Analyst",
+            "Data Analyst",
+            "Data Scientist",
+            "Database Administrator",
+            "Reporting Specialist"
+          ],
+          "interests": [
+            "analysis",
+            "analytics",
+            "data",
+            "data visualization",
+            "excel",
+            "power bi",
+            "python",
+            "reporting",
+            "spss",
+            "statistics",
+            "using"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Employee Programmes",
+      "subcategories": [
+        {
+          "name": "Business Communication & Reporting",
+          "professions": [
+            "Manager",
+            "Professional Practitioner",
+            "Supervisor",
+            "Team Member"
+          ],
+          "interests": [
+            "business",
+            "business plan writing",
+            "career growth",
+            "plan",
+            "presentation",
+            "productivity",
+            "professional development",
+            "proposals",
+            "public",
+            "reports",
+            "skills",
+            "speaking",
+            "workplace skills",
+            "writing"
+          ]
+        },
+        {
+          "name": "Critical Thinking & Problem Solving",
+          "professions": [
+            "Manager",
+            "Professional Practitioner",
+            "Supervisor",
+            "Team Member"
+          ],
+          "interests": [
+            "career growth",
+            "creative",
+            "critical",
+            "critical thinking",
+            "decision",
+            "innovation",
+            "making",
+            "problem",
+            "productivity",
+            "professional development",
+            "solving",
+            "thinking",
+            "workplace skills"
+          ]
+        },
+        {
+          "name": "Interpersonal Skills & Well-being",
+          "professions": [
+            "Manager",
+            "Professional Practitioner",
+            "Supervisor",
+            "Team Member"
+          ],
+          "interests": [
+            "career growth",
+            "emotional",
+            "emotional intelligence",
+            "intelligence",
+            "management",
+            "productivity",
+            "professional development",
+            "stress",
+            "stress management",
+            "workplace skills"
+          ]
+        },
+        {
+          "name": "Personal Productivity & Time Management",
+          "professions": [
+            "Manager",
+            "Professional Practitioner",
+            "Supervisor",
+            "Team Member"
+          ],
+          "interests": [
+            "career growth",
+            "effective",
+            "efficiency",
+            "goal",
+            "goal setting",
+            "management",
+            "planning",
+            "productivity",
+            "professional development",
+            "scheduling",
+            "setting",
+            "strategies",
+            "time",
+            "workplace skills"
+          ]
+        },
+        {
+          "name": "Professional Workplace Conduct",
+          "professions": [
+            "Manager",
+            "Professional Practitioner",
+            "Supervisor",
+            "Team Member"
+          ],
+          "interests": [
+            "business",
+            "business communication",
+            "business ethics",
+            "business etiquette",
+            "career growth",
+            "communication",
+            "ethics",
+            "etiquette",
+            "productivity",
+            "professional development",
+            "workplace skills"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Finance Management Courses",
+      "subcategories": [
+        {
+          "name": "Cost & Revenue Management",
+          "professions": [
+            "Accountant",
+            "Auditor",
+            "Budget Analyst",
+            "Financial Analyst",
+            "Financial Controller",
+            "Risk Analyst",
+            "Tax Consultant"
+          ],
+          "interests": [
+            "audit",
+            "budgeting",
+            "compliance",
+            "control",
+            "cost",
+            "cost control",
+            "financial modeling",
+            "forecasting",
+            "management",
+            "reduction",
+            "revenue",
+            "risk management",
+            "taxation"
+          ]
+        },
+        {
+          "name": "Financial Auditing",
+          "professions": [
+            "Accountant",
+            "Auditor",
+            "Budget Analyst",
+            "Financial Analyst",
+            "Financial Controller",
+            "Risk Analyst",
+            "Tax Consultant"
+          ],
+          "interests": [
+            "audit",
+            "budgeting",
+            "compliance",
+            "cost control",
+            "essentials",
+            "financial",
+            "financial audit essentials",
+            "financial modeling",
+            "forecasting",
+            "risk management",
+            "taxation"
+          ]
+        },
+        {
+          "name": "Financial Modeling & FP&A",
+          "professions": [
+            "Accountant",
+            "Auditor",
+            "Budget Analyst",
+            "Financial Analyst",
+            "Financial Controller",
+            "Risk Analyst",
+            "Tax Consultant"
+          ],
+          "interests": [
+            "audit",
+            "budgeting",
+            "compliance",
+            "cost control",
+            "excel",
+            "financial",
+            "financial modeling",
+            "forecasting",
+            "modeling",
+            "risk management",
+            "taxation",
+            "using"
+          ]
+        },
+        {
+          "name": "Financial Risk & Credit Analysis",
+          "professions": [
+            "Accountant",
+            "Auditor",
+            "Budget Analyst",
+            "Financial Analyst",
+            "Financial Controller",
+            "Risk Analyst",
+            "Tax Consultant"
+          ],
+          "interests": [
+            "analysis",
+            "audit",
+            "budgeting",
+            "compliance",
+            "cost control",
+            "credit",
+            "credit risk analysis",
+            "financial",
+            "financial modeling",
+            "forecasting",
+            "management",
+            "risk",
+            "risk management",
+            "taxation"
+          ]
+        },
+        {
+          "name": "Strategic & Corporate Finance",
+          "professions": [
+            "Accountant",
+            "Auditor",
+            "Budget Analyst",
+            "Financial Analyst",
+            "Financial Controller",
+            "Risk Analyst",
+            "Tax Consultant"
+          ],
+          "interests": [
+            "audit",
+            "budgeting",
+            "compliance",
+            "cost control",
+            "creation",
+            "executive",
+            "finance",
+            "financial",
+            "financial modeling",
+            "forecasting",
+            "managers",
+            "nonfinance",
+            "program",
+            "risk management",
+            "senior",
+            "strategies",
+            "taxation",
+            "value"
+          ]
+        },
+        {
+          "name": "Taxation & Corporate Compliance",
+          "professions": [
+            "Accountant",
+            "Auditor",
+            "Budget Analyst",
+            "Financial Analyst",
+            "Financial Controller",
+            "Risk Analyst",
+            "Tax Consultant"
+          ],
+          "interests": [
+            "audit",
+            "budgeting",
+            "compliance",
+            "corporate",
+            "cost control",
+            "financial modeling",
+            "forecasting",
+            "planning",
+            "risk management",
+            "taxation"
+          ]
+        },
+        {
+          "name": "Treasury & Wealth Management",
+          "professions": [
+            "Accountant",
+            "Auditor",
+            "Budget Analyst",
+            "Financial Analyst",
+            "Financial Controller",
+            "Risk Analyst",
+            "Tax Consultant"
+          ],
+          "interests": [
+            "audit",
+            "budgeting",
+            "compliance",
+            "cost control",
+            "financial modeling",
+            "forecasting",
+            "fund",
+            "management",
+            "risk management",
+            "taxation",
+            "treasury"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Health & Safety Courses",
+      "subcategories": [
+        {
+          "name": "Emergency First Aid",
+          "professions": [
+            "Compliance Officer",
+            "Facility Manager",
+            "HSE Officer",
+            "Risk Assessor",
+            "Safety Inspector"
+          ],
+          "interests": [
+            "aofa",
+            "cieh",
+            "fire safety",
+            "first",
+            "first aid",
+            "first aid (aofa)",
+            "food hygiene",
+            "hse",
+            "occupational health",
+            "workplace safety"
+          ]
+        },
+        {
+          "name": "Fire Safety",
+          "professions": [
+            "Compliance Officer",
+            "Facility Manager",
+            "HSE Officer",
+            "Risk Assessor",
+            "Safety Inspector"
+          ],
+          "interests": [
+            "cieh",
+            "fire",
+            "fire safety",
+            "first aid",
+            "food hygiene",
+            "hse",
+            "occupational health",
+            "safety",
+            "workplace safety"
+          ]
+        },
+        {
+          "name": "Food Safety & Hygiene",
+          "professions": [
+            "Compliance Officer",
+            "Facility Manager",
+            "HSE Officer",
+            "Risk Assessor",
+            "Safety Inspector"
+          ],
+          "interests": [
+            "cieh",
+            "fire safety",
+            "first aid",
+            "food",
+            "food hygiene",
+            "food safety cieh",
+            "hse",
+            "occupational health",
+            "safety",
+            "workplace safety"
+          ]
+        },
+        {
+          "name": "Occupational Health & Safety (Advanced)",
+          "professions": [
+            "Compliance Officer",
+            "Facility Manager",
+            "HSE Officer",
+            "Risk Assessor",
+            "Safety Inspector"
+          ],
+          "interests": [
+            "certificate",
+            "cieh",
+            "fire safety",
+            "first aid",
+            "food hygiene",
+            "health",
+            "hse",
+            "intermediate",
+            "level",
+            "occupational",
+            "occupational health",
+            "safety",
+            "workplace safety"
+          ]
+        },
+        {
+          "name": "Occupational Health & Safety (Foundation)",
+          "professions": [
+            "Compliance Officer",
+            "Facility Manager",
+            "HSE Officer",
+            "Risk Assessor",
+            "Safety Inspector"
+          ],
+          "interests": [
+            "certificate",
+            "cieh",
+            "fire safety",
+            "first aid",
+            "food hygiene",
+            "foundation",
+            "health",
+            "hse",
+            "level",
+            "management",
+            "occupational",
+            "occupational health",
+            "safety",
+            "workplace safety"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Human Resource Mgt Courses",
+      "subcategories": [
+        {
+          "name": "Core HR Operations",
+          "professions": [
+            "HR Business Partner",
+            "HR Manager",
+            "Payroll Administrator",
+            "Talent Acquisition Specialist",
+            "Training Coordinator"
+          ],
+          "interests": [
+            "business",
+            "daily",
+            "design",
+            "employee wellness",
+            "hr analytics",
+            "hrbp",
+            "human",
+            "human resource management",
+            "management",
+            "operations",
+            "performance review",
+            "practice",
+            "practitioner",
+            "resource",
+            "strategy",
+            "success",
+            "talent management",
+            "workforce planning"
+          ]
+        },
+        {
+          "name": "Digital HR & HR Tech",
+          "professions": [
+            "HR Business Partner",
+            "HR Manager",
+            "Payroll Administrator",
+            "Talent Acquisition Specialist",
+            "Training Coordinator"
+          ],
+          "interests": [
+            "digital",
+            "employee wellness",
+            "future",
+            "hr analytics",
+            "hrbp",
+            "human",
+            "performance review",
+            "resources",
+            "talent management",
+            "transforming",
+            "work",
+            "workforce planning"
+          ]
+        },
+        {
+          "name": "Employee Experience & Well-being",
+          "professions": [
+            "HR Business Partner",
+            "HR Manager",
+            "Payroll Administrator",
+            "Talent Acquisition Specialist",
+            "Training Coordinator"
+          ],
+          "interests": [
+            "balance",
+            "design",
+            "driving",
+            "employee",
+            "employee wellness",
+            "engagement",
+            "experience",
+            "hr analytics",
+            "hrbp",
+            "innovation",
+            "performance review",
+            "talent management",
+            "thinking",
+            "wellbeing",
+            "wellness",
+            "workforce planning",
+            "worklife",
+            "workplace"
+          ]
+        },
+        {
+          "name": "General HR",
+          "professions": [
+            "HR Business Partner",
+            "HR Manager",
+            "Payroll Administrator",
+            "Talent Acquisition Specialist",
+            "Training Coordinator"
+          ],
+          "interests": [
+            "centered",
+            "conducting",
+            "culture",
+            "effective",
+            "employee wellness",
+            "establishing",
+            "goal",
+            "hr analytics",
+            "hrbp",
+            "performance",
+            "performance review",
+            "reviews",
+            "talent management",
+            "workforce planning"
+          ]
+        },
+        {
+          "name": "HR Analytics & People Metrics",
+          "professions": [
+            "HR Business Partner",
+            "HR Manager",
+            "Payroll Administrator",
+            "Talent Acquisition Specialist",
+            "Training Coordinator"
+          ],
+          "interests": [
+            "analytics",
+            "data",
+            "decisions",
+            "employee wellness",
+            "hr analytics",
+            "hrbp",
+            "leveraging",
+            "make",
+            "metrics",
+            "people",
+            "performance review",
+            "strategic",
+            "talent management",
+            "using",
+            "workforce",
+            "workforce planning"
+          ]
+        },
+        {
+          "name": "Learning, Development & Training",
+          "professions": [
+            "HR Business Partner",
+            "HR Manager",
+            "Payroll Administrator",
+            "Talent Acquisition Specialist",
+            "Training Coordinator"
+          ],
+          "interests": [
+            "business",
+            "development",
+            "driving",
+            "employee wellness",
+            "growth",
+            "hr analytics",
+            "hrbp",
+            "learning",
+            "management",
+            "performance review",
+            "performers",
+            "planning",
+            "staff",
+            "strategy",
+            "success",
+            "talent",
+            "talent management",
+            "turning",
+            "workforce",
+            "workforce planning"
+          ]
+        },
+        {
+          "name": "Payroll & Compensation Administration",
+          "professions": [
+            "HR Business Partner",
+            "HR Manager",
+            "Payroll Administrator",
+            "Talent Acquisition Specialist",
+            "Training Coordinator"
+          ],
+          "interests": [
+            "administration",
+            "bonuses",
+            "employee wellness",
+            "hr analytics",
+            "hrbp",
+            "implementing",
+            "payroll",
+            "performance review",
+            "practice",
+            "salaries",
+            "standard",
+            "talent management",
+            "taxes",
+            "workforce planning"
+          ]
+        },
+        {
+          "name": "Strategic HR Business Partnering",
+          "professions": [
+            "HR Business Partner",
+            "HR Manager",
+            "Payroll Administrator",
+            "Talent Acquisition Specialist",
+            "Training Coordinator"
+          ],
+          "interests": [
+            "business",
+            "employee wellness",
+            "hr analytics",
+            "hrbp",
+            "partner",
+            "performance review",
+            "talent management",
+            "workforce planning"
+          ]
+        },
+        {
+          "name": "Workforce Planning & Succession",
+          "professions": [
+            "HR Business Partner",
+            "HR Manager",
+            "Payroll Administrator",
+            "Talent Acquisition Specialist",
+            "Training Coordinator"
+          ],
+          "interests": [
+            "aligning",
+            "best",
+            "building",
+            "business",
+            "demand",
+            "employee wellness",
+            "employment",
+            "firm",
+            "futureready",
+            "getting",
+            "growth",
+            "hr analytics",
+            "hrbp",
+            "management",
+            "people",
+            "performance review",
+            "planning",
+            "skills",
+            "strategic",
+            "strategy",
+            "succession",
+            "talent",
+            "talent management",
+            "workforce",
+            "workforce planning"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Leadership Programmes",
+      "subcategories": [
+        {
+          "name": "Change Management",
+          "professions": [
+            "Department Head",
+            "Director",
+            "Executive",
+            "Manager",
+            "Supervisor",
+            "Team Leader"
+          ],
+          "interests": [
+            "change",
+            "change management",
+            "coaching",
+            "decision making",
+            "executive leadership",
+            "management",
+            "mentoring",
+            "strategic planning",
+            "team building"
+          ]
+        },
+        {
+          "name": "Executive Influence & Persuasion",
+          "professions": [
+            "Department Head",
+            "Director",
+            "Executive",
+            "Manager",
+            "Supervisor",
+            "Team Leader"
+          ],
+          "interests": [
+            "change management",
+            "coaching",
+            "decision making",
+            "executive leadership",
+            "influence",
+            "influence and persuasion",
+            "mentoring",
+            "persuasion",
+            "strategic planning",
+            "team building"
+          ]
+        },
+        {
+          "name": "Functional Leadership & Management",
+          "professions": [
+            "Department Head",
+            "Director",
+            "Executive",
+            "Manager",
+            "Supervisor",
+            "Team Leader"
+          ],
+          "interests": [
+            "business",
+            "change management",
+            "coaching",
+            "decision making",
+            "executive leadership",
+            "functional",
+            "leadership",
+            "managers",
+            "mentoring",
+            "midlevel",
+            "planning",
+            "strategic planning",
+            "supervisor",
+            "tactical",
+            "team building"
+          ]
+        },
+        {
+          "name": "Remote Team Leadership",
+          "professions": [
+            "Department Head",
+            "Director",
+            "Executive",
+            "Manager",
+            "Supervisor",
+            "Team Leader"
+          ],
+          "interests": [
+            "change management",
+            "coaching",
+            "decision making",
+            "executive leadership",
+            "leading",
+            "leading remote teams",
+            "mentoring",
+            "remote",
+            "strategic planning",
+            "team building",
+            "teams"
+          ]
+        },
+        {
+          "name": "Strategic Planning & Execution",
+          "professions": [
+            "Department Head",
+            "Director",
+            "Executive",
+            "Manager",
+            "Supervisor",
+            "Team Leader"
+          ],
+          "interests": [
+            "business",
+            "change management",
+            "coaching",
+            "decision making",
+            "executive leadership",
+            "management",
+            "managers",
+            "mentoring",
+            "planning",
+            "retirement",
+            "retirement planning programme",
+            "strategic",
+            "strategic planning",
+            "strategy",
+            "team building"
+          ]
+        },
+        {
+          "name": "Team Development & Coaching",
+          "professions": [
+            "Department Head",
+            "Director",
+            "Executive",
+            "Manager",
+            "Supervisor",
+            "Team Leader"
+          ],
+          "interests": [
+            "building",
+            "change management",
+            "coaching",
+            "coaching and mentoring",
+            "decision making",
+            "developing",
+            "executive leadership",
+            "high",
+            "mentoring",
+            "performing",
+            "strategic planning",
+            "team",
+            "team building",
+            "teams"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Legal & Regulatory Courses",
+      "subcategories": [
+        {
+          "name": "Contract Law & Management",
+          "professions": [
+            "Compliance Manager",
+            "Contract Administrator",
+            "Data Protection Officer",
+            "Legal Counsel"
+          ],
+          "interests": [
+            "contract",
+            "contract law",
+            "data privacy",
+            "gdpr",
+            "intellectual property",
+            "management",
+            "regulatory compliance"
+          ]
+        },
+        {
+          "name": "Data Privacy & Compliance",
+          "professions": [
+            "Compliance Manager",
+            "Contract Administrator",
+            "Data Protection Officer",
+            "Legal Counsel"
+          ],
+          "interests": [
+            "contract law",
+            "data",
+            "data privacy",
+            "gdpr",
+            "intellectual property",
+            "privacy",
+            "protection",
+            "regulatory compliance"
+          ]
+        },
+        {
+          "name": "Intellectual Property & Compliance",
+          "professions": [
+            "Compliance Manager",
+            "Contract Administrator",
+            "Data Protection Officer",
+            "Legal Counsel"
+          ],
+          "interests": [
+            "compliance",
+            "contract law",
+            "data privacy",
+            "gdpr",
+            "intellectual",
+            "intellectual property",
+            "property",
+            "regulatory compliance"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Marketing & Branding Courses",
+      "subcategories": [
+        {
+          "name": "Brand Strategy & Identity Design",
+          "professions": [
+            "Account Manager",
+            "Brand Manager",
+            "Business Development Manager",
+            "Inside Sales Representative",
+            "Marketing Specialist",
+            "Sales Executive"
+          ],
+          "interests": [
+            "awareness",
+            "b2b sales",
+            "brand",
+            "branding",
+            "branding strategy",
+            "competition",
+            "crafting",
+            "design",
+            "development",
+            "digital",
+            "digital marketing",
+            "elements",
+            "eliminating",
+            "identity",
+            "increase",
+            "lead generation",
+            "market research",
+            "marketing",
+            "memorable",
+            "negotiation",
+            "pitching",
+            "planning",
+            "positioning",
+            "sales",
+            "strategy",
+            "strong"
+          ]
+        },
+        {
+          "name": "Commercial Pricing Strategy",
+          "professions": [
+            "Account Manager",
+            "Brand Manager",
+            "Business Development Manager",
+            "Inside Sales Representative",
+            "Marketing Specialist",
+            "Sales Executive"
+          ],
+          "interests": [
+            "b2b sales",
+            "branding strategy",
+            "developing",
+            "digital marketing",
+            "lead generation",
+            "market research",
+            "moving",
+            "negotiation",
+            "pitching",
+            "pricing",
+            "profitability",
+            "strategies",
+            "survival"
+          ]
+        },
+        {
+          "name": "Content Marketing & Strategy",
+          "professions": [
+            "Account Manager",
+            "Brand Manager",
+            "Business Development Manager",
+            "Inside Sales Representative",
+            "Marketing Specialist",
+            "Sales Executive"
+          ],
+          "interests": [
+            "b2b sales",
+            "branding strategy",
+            "content",
+            "content creation",
+            "creation",
+            "digital marketing",
+            "lead generation",
+            "market research",
+            "negotiation",
+            "pitching"
+          ]
+        },
+        {
+          "name": "Digital Marketing & Strategy",
+          "professions": [
+            "Account Manager",
+            "Brand Manager",
+            "Business Development Manager",
+            "Inside Sales Representative",
+            "Marketing Specialist",
+            "Sales Executive"
+          ],
+          "interests": [
+            "advanced",
+            "b2b sales",
+            "branding strategy",
+            "campaigns",
+            "datadriven",
+            "digital",
+            "digital marketing",
+            "growth",
+            "lead generation",
+            "market research",
+            "marketing",
+            "mastering",
+            "negotiation",
+            "pitching",
+            "planning",
+            "specialist",
+            "strategies",
+            "strategy"
+          ]
+        },
+        {
+          "name": "General Marketing",
+          "professions": [
+            "Account Manager",
+            "Brand Manager",
+            "Business Development Manager",
+            "Inside Sales Representative",
+            "Marketing Specialist",
+            "Sales Executive"
+          ],
+          "interests": [
+            "b2b sales",
+            "branding strategy",
+            "creating",
+            "customer",
+            "delivery",
+            "developing",
+            "digital marketing",
+            "experience",
+            "improving",
+            "increasing",
+            "lead generation",
+            "market",
+            "market research",
+            "marketing",
+            "memorable",
+            "negotiation",
+            "pitching",
+            "plans",
+            "service",
+            "share",
+            "strategies"
+          ]
+        },
+        {
+          "name": "Marketing Communications & PR",
+          "professions": [
+            "Account Manager",
+            "Brand Manager",
+            "Business Development Manager",
+            "Inside Sales Representative",
+            "Marketing Specialist",
+            "Sales Executive"
+          ],
+          "interests": [
+            "b2b sales",
+            "branding strategy",
+            "communications",
+            "digital marketing",
+            "influence",
+            "lead generation",
+            "market",
+            "market research",
+            "marketing",
+            "negotiation",
+            "pitching",
+            "plans",
+            "reach",
+            "strategy",
+            "target"
+          ]
+        },
+        {
+          "name": "Marketing Innovation & Growth",
+          "professions": [
+            "Account Manager",
+            "Brand Manager",
+            "Business Development Manager",
+            "Inside Sales Representative",
+            "Marketing Specialist",
+            "Sales Executive"
+          ],
+          "interests": [
+            "advantage",
+            "b2b sales",
+            "branding strategy",
+            "breakthrough",
+            "business",
+            "competitive",
+            "creativity",
+            "digital",
+            "digital marketing",
+            "driving",
+            "future",
+            "growth",
+            "innovation",
+            "lead generation",
+            "leadership",
+            "market research",
+            "marketing",
+            "navigating",
+            "negotiation",
+            "pitching",
+            "strategic",
+            "strategies",
+            "transformation"
+          ]
+        },
+        {
+          "name": "Marketing Intelligence & Analytics",
+          "professions": [
+            "Account Manager",
+            "Brand Manager",
+            "Business Development Manager",
+            "Inside Sales Representative",
+            "Marketing Specialist",
+            "Sales Executive"
+          ],
+          "interests": [
+            "analytics",
+            "analyze",
+            "b2b sales",
+            "branding strategy",
+            "conducting",
+            "customer",
+            "data",
+            "digital marketing",
+            "forecasting",
+            "insights",
+            "lead generation",
+            "market research",
+            "marketing",
+            "measure",
+            "metrics",
+            "negotiation",
+            "obtain",
+            "optimize",
+            "performance",
+            "pitching",
+            "research"
+          ]
+        },
+        {
+          "name": "Strategic Marketing Leadership",
+          "professions": [
+            "Account Manager",
+            "Brand Manager",
+            "Business Development Manager",
+            "Inside Sales Representative",
+            "Marketing Specialist",
+            "Sales Executive"
+          ],
+          "interests": [
+            "b2b sales",
+            "branding strategy",
+            "building",
+            "development",
+            "digital marketing",
+            "highperforming",
+            "lead generation",
+            "leadership",
+            "market research",
+            "marketing",
+            "negotiation",
+            "pitching",
+            "team",
+            "teams"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Operations Management Courses",
+      "subcategories": [
+        {
+          "name": "Bid & Tender Management",
+          "professions": [
+            "Document Controller",
+            "Facility Manager",
+            "Operations Manager",
+            "Procurement Officer",
+            "Risk Officer",
+            "Supply Chain Analyst"
+          ],
+          "interests": [
+            "bid management",
+            "logistics",
+            "management",
+            "process design",
+            "procurement",
+            "quality assurance",
+            "supply chain",
+            "tender",
+            "warehousing"
+          ]
+        },
+        {
+          "name": "Business Process & Continuous Improvement",
+          "professions": [
+            "Document Controller",
+            "Facility Manager",
+            "Operations Manager",
+            "Procurement Officer",
+            "Risk Officer",
+            "Supply Chain Analyst"
+          ],
+          "interests": [
+            "bid management",
+            "business",
+            "design",
+            "excellence",
+            "improvement",
+            "lean",
+            "lean process improvement",
+            "logistics",
+            "management",
+            "operational",
+            "operational excellence",
+            "process",
+            "process design",
+            "procurement",
+            "quality assurance",
+            "supply chain",
+            "warehousing"
+          ]
+        },
+        {
+          "name": "Document Control & Records Management",
+          "professions": [
+            "Document Controller",
+            "Facility Manager",
+            "Operations Manager",
+            "Procurement Officer",
+            "Risk Officer",
+            "Supply Chain Analyst"
+          ],
+          "interests": [
+            "bid management",
+            "control",
+            "document",
+            "document control",
+            "logistics",
+            "process design",
+            "procurement",
+            "quality assurance",
+            "supply chain",
+            "warehousing"
+          ]
+        },
+        {
+          "name": "Facility & Property Management",
+          "professions": [
+            "Document Controller",
+            "Facility Manager",
+            "Operations Manager",
+            "Procurement Officer",
+            "Risk Officer",
+            "Supply Chain Analyst"
+          ],
+          "interests": [
+            "bid management",
+            "facility",
+            "facility management (ifma)",
+            "facility management practitioner",
+            "ifma",
+            "logistics",
+            "management",
+            "practitioner",
+            "process design",
+            "procurement",
+            "quality assurance",
+            "supply chain",
+            "warehousing"
+          ]
+        },
+        {
+          "name": "Fleet & Transport Management",
+          "professions": [
+            "Document Controller",
+            "Facility Manager",
+            "Operations Manager",
+            "Procurement Officer",
+            "Risk Officer",
+            "Supply Chain Analyst"
+          ],
+          "interests": [
+            "bid management",
+            "fleet",
+            "fleet management",
+            "logistics",
+            "management",
+            "process design",
+            "procurement",
+            "quality assurance",
+            "supply chain",
+            "warehousing"
+          ]
+        },
+        {
+          "name": "General Operations",
+          "professions": [
+            "Document Controller",
+            "Facility Manager",
+            "Operations Manager",
+            "Procurement Officer",
+            "Risk Officer",
+            "Supply Chain Analyst"
+          ],
+          "interests": [
+            "advanced",
+            "bid management",
+            "executives",
+            "logistics",
+            "operations",
+            "process design",
+            "procurement",
+            "quality assurance",
+            "senior",
+            "strategic",
+            "supply chain",
+            "warehousing"
+          ]
+        },
+        {
+          "name": "Internal Audit & Controls",
+          "professions": [
+            "Document Controller",
+            "Facility Manager",
+            "Operations Manager",
+            "Procurement Officer",
+            "Risk Officer",
+            "Supply Chain Analyst"
+          ],
+          "interests": [
+            "auditing",
+            "bid management",
+            "internal",
+            "internal auditing",
+            "logistics",
+            "process design",
+            "procurement",
+            "quality assurance",
+            "supply chain",
+            "warehousing"
+          ]
+        },
+        {
+          "name": "Logistics & Supply Chain Management",
+          "professions": [
+            "Document Controller",
+            "Facility Manager",
+            "Operations Manager",
+            "Procurement Officer",
+            "Risk Officer",
+            "Supply Chain Analyst"
+          ],
+          "interests": [
+            "analytics",
+            "associate",
+            "bid management",
+            "building",
+            "business",
+            "chain",
+            "ecofriendly",
+            "excel",
+            "green",
+            "growth",
+            "introduction",
+            "logistics",
+            "management",
+            "optimizing",
+            "process design",
+            "procurement",
+            "quality assurance",
+            "resilient",
+            "sourcing",
+            "strategic",
+            "supply",
+            "supply chain",
+            "sustainable",
+            "using",
+            "warehousing"
+          ]
+        },
+        {
+          "name": "Office Administration & Executive Support",
+          "professions": [
+            "Document Controller",
+            "Facility Manager",
+            "Operations Manager",
+            "Procurement Officer",
+            "Risk Officer",
+            "Supply Chain Analyst"
+          ],
+          "interests": [
+            "administration",
+            "assistant",
+            "bid management",
+            "effectively",
+            "efficiently",
+            "executive",
+            "executive assistant",
+            "logistics",
+            "management",
+            "office",
+            "process design",
+            "procurement",
+            "quality assurance",
+            "running",
+            "supply chain",
+            "warehousing"
+          ]
+        },
+        {
+          "name": "Operational Risk Management",
+          "professions": [
+            "Document Controller",
+            "Facility Manager",
+            "Operations Manager",
+            "Procurement Officer",
+            "Risk Officer",
+            "Supply Chain Analyst"
+          ],
+          "interests": [
+            "advanced",
+            "bid management",
+            "enterprise",
+            "enterprise risk management",
+            "executive",
+            "logistics",
+            "management",
+            "operational",
+            "process design",
+            "procurement",
+            "program",
+            "quality assurance",
+            "risk",
+            "senior",
+            "supply chain",
+            "warehousing"
+          ]
+        },
+        {
+          "name": "Procurement & Vendor Management",
+          "professions": [
+            "Document Controller",
+            "Facility Manager",
+            "Operations Manager",
+            "Procurement Officer",
+            "Risk Officer",
+            "Supply Chain Analyst"
+          ],
+          "interests": [
+            "associate",
+            "bid management",
+            "contract",
+            "logistics",
+            "management",
+            "process design",
+            "procurement",
+            "quality assurance",
+            "registration",
+            "supply chain",
+            "vendor",
+            "vendor registration management",
+            "warehousing"
+          ]
+        },
+        {
+          "name": "Quality Assurance & Control",
+          "professions": [
+            "Document Controller",
+            "Facility Manager",
+            "Operations Manager",
+            "Procurement Officer",
+            "Risk Officer",
+            "Supply Chain Analyst"
+          ],
+          "interests": [
+            "assurance",
+            "bid management",
+            "control",
+            "logistics",
+            "process design",
+            "procurement",
+            "quality",
+            "quality assurance",
+            "quality control",
+            "supply chain",
+            "warehousing"
+          ]
+        },
+        {
+          "name": "Warehouse & Inventory Operations",
+          "professions": [
+            "Document Controller",
+            "Facility Manager",
+            "Operations Manager",
+            "Procurement Officer",
+            "Risk Officer",
+            "Supply Chain Analyst"
+          ],
+          "interests": [
+            "bid management",
+            "design",
+            "inventory",
+            "logistics",
+            "management",
+            "operations",
+            "process design",
+            "procurement",
+            "quality assurance",
+            "supply chain",
+            "warehouse",
+            "warehousing"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Project Management Courses",
+      "subcategories": [
+        {
+          "name": "Agile & Scrum Methodologies",
+          "professions": [
+            "Business Analyst",
+            "PMO Lead",
+            "Program Manager",
+            "Project Coordinator",
+            "Project Manager",
+            "Scrum Master"
+          ],
+          "interests": [
+            "agile",
+            "certification",
+            "certified",
+            "jira",
+            "master",
+            "monitoring and evaluation",
+            "ms project",
+            "pmp",
+            "practioner",
+            "practitioner",
+            "product management",
+            "professional",
+            "scrum",
+            "stakeholder management"
+          ]
+        },
+        {
+          "name": "Business Analysis",
+          "professions": [
+            "Business Analyst",
+            "PMO Lead",
+            "Program Manager",
+            "Project Coordinator",
+            "Project Manager",
+            "Scrum Master"
+          ],
+          "interests": [
+            "agile",
+            "analysis",
+            "analyst",
+            "business",
+            "business analysis",
+            "jira",
+            "junior",
+            "monitoring and evaluation",
+            "ms project",
+            "pmp",
+            "product management",
+            "scrum",
+            "senior",
+            "stakeholder management"
+          ]
+        },
+        {
+          "name": "Monitoring & Evaluation (M&E)",
+          "professions": [
+            "Business Analyst",
+            "PMO Lead",
+            "Program Manager",
+            "Project Coordinator",
+            "Project Manager",
+            "Scrum Master"
+          ],
+          "interests": [
+            "advanced",
+            "agile",
+            "evaluation",
+            "jira",
+            "monitoring",
+            "monitoring and evaluation",
+            "ms project",
+            "pmp",
+            "product management",
+            "scrum",
+            "stakeholder management"
+          ]
+        },
+        {
+          "name": "Product Management",
+          "professions": [
+            "Business Analyst",
+            "PMO Lead",
+            "Program Manager",
+            "Project Coordinator",
+            "Project Manager",
+            "Scrum Master"
+          ],
+          "interests": [
+            "agile",
+            "jira",
+            "management",
+            "monitoring and evaluation",
+            "ms project",
+            "pmp",
+            "product",
+            "product management",
+            "scrum",
+            "stakeholder management"
+          ]
+        },
+        {
+          "name": "Program & Portfolio Management",
+          "professions": [
+            "Business Analyst",
+            "PMO Lead",
+            "Program Manager",
+            "Project Coordinator",
+            "Project Manager",
+            "Scrum Master"
+          ],
+          "interests": [
+            "agile",
+            "jira",
+            "management",
+            "monitoring and evaluation",
+            "ms project",
+            "pmp",
+            "portfolio",
+            "portfolio management professional",
+            "product management",
+            "professional",
+            "program",
+            "program management",
+            "scrum",
+            "stakeholder management"
+          ]
+        },
+        {
+          "name": "Program Design & Grant Fundraising",
+          "professions": [
+            "Business Analyst",
+            "PMO Lead",
+            "Program Manager",
+            "Project Coordinator",
+            "Project Manager",
+            "Scrum Master"
+          ],
+          "interests": [
+            "agile",
+            "design",
+            "fund",
+            "jira",
+            "monitoring and evaluation",
+            "ms project",
+            "pmp",
+            "product management",
+            "program",
+            "raising",
+            "scrum",
+            "stakeholder management"
+          ]
+        },
+        {
+          "name": "Project Management Software & Scheduling",
+          "professions": [
+            "Business Analyst",
+            "PMO Lead",
+            "Program Manager",
+            "Project Coordinator",
+            "Project Manager",
+            "Scrum Master"
+          ],
+          "interests": [
+            "agile",
+            "coordinator",
+            "jira",
+            "management",
+            "manager",
+            "microsoft",
+            "microsoft project",
+            "monitoring and evaluation",
+            "ms project",
+            "pmp",
+            "practictional",
+            "primavera",
+            "primavera p6",
+            "product management",
+            "professional",
+            "project",
+            "project scheduling management",
+            "scheduling",
+            "scrum",
+            "stakeholder management"
+          ]
+        },
+        {
+          "name": "Project Risk Management",
+          "professions": [
+            "Business Analyst",
+            "PMO Lead",
+            "Program Manager",
+            "Project Coordinator",
+            "Project Manager",
+            "Scrum Master"
+          ],
+          "interests": [
+            "agile",
+            "jira",
+            "management",
+            "monitoring and evaluation",
+            "ms project",
+            "pmp",
+            "product management",
+            "risk",
+            "risk management course",
+            "scrum",
+            "stakeholder management"
+          ]
+        },
+        {
+          "name": "Stakeholder Management & Public Relations",
+          "professions": [
+            "Business Analyst",
+            "PMO Lead",
+            "Program Manager",
+            "Project Coordinator",
+            "Project Manager",
+            "Scrum Master"
+          ],
+          "interests": [
+            "agile",
+            "communities",
+            "effective",
+            "engaging",
+            "jira",
+            "management",
+            "monitoring and evaluation",
+            "ms project",
+            "pmp",
+            "product management",
+            "scrum",
+            "stakeholder",
+            "stakeholder management"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Sales Professionals Courses",
+      "subcategories": [
+        {
+          "name": "B2B Sales & Business Development",
+          "professions": [
+            "Account Manager",
+            "Brand Manager",
+            "Business Development Manager",
+            "Inside Sales Representative",
+            "Marketing Specialist",
+            "Sales Executive"
+          ],
+          "interests": [
+            "b2b sales",
+            "branding strategy",
+            "business",
+            "development",
+            "digital marketing",
+            "lead generation",
+            "market research",
+            "negotiation",
+            "pitching",
+            "sales"
+          ]
+        },
+        {
+          "name": "Enterprise Sales & Negotiation",
+          "professions": [
+            "Account Manager",
+            "Brand Manager",
+            "Business Development Manager",
+            "Inside Sales Representative",
+            "Marketing Specialist",
+            "Sales Executive"
+          ],
+          "interests": [
+            "b2b sales",
+            "branding strategy",
+            "complex",
+            "deal",
+            "digital marketing",
+            "enterprise",
+            "executive",
+            "influence",
+            "lead generation",
+            "management",
+            "market research",
+            "mastery",
+            "negotiation",
+            "pitching",
+            "sales"
+          ]
+        },
+        {
+          "name": "General Sales",
+          "professions": [
+            "Account Manager",
+            "Brand Manager",
+            "Business Development Manager",
+            "Inside Sales Representative",
+            "Marketing Specialist",
+            "Sales Executive"
+          ],
+          "interests": [
+            "b2b sales",
+            "branding strategy",
+            "changing",
+            "digital marketing",
+            "disruption",
+            "driving",
+            "expansion",
+            "global",
+            "growth",
+            "innovation",
+            "international",
+            "lead generation",
+            "market",
+            "market research",
+            "negotiation",
+            "pitching",
+            "sales",
+            "strategies"
+          ]
+        },
+        {
+          "name": "Key Account & Relationship Management",
+          "professions": [
+            "Account Manager",
+            "Brand Manager",
+            "Business Development Manager",
+            "Inside Sales Representative",
+            "Marketing Specialist",
+            "Sales Executive"
+          ],
+          "interests": [
+            "account",
+            "b2b sales",
+            "branding strategy",
+            "building",
+            "digital marketing",
+            "key account management",
+            "lead generation",
+            "management",
+            "market research",
+            "negotiation",
+            "pitching",
+            "relationship",
+            "sales"
+          ]
+        },
+        {
+          "name": "Prospecting, Pitching & Lead Generation",
+          "professions": [
+            "Account Manager",
+            "Brand Manager",
+            "Business Development Manager",
+            "Inside Sales Representative",
+            "Marketing Specialist",
+            "Sales Executive"
+          ],
+          "interests": [
+            "b2b sales",
+            "branding strategy",
+            "closing",
+            "developing",
+            "digital",
+            "digital marketing",
+            "enablement",
+            "generation",
+            "lead",
+            "lead generation",
+            "leadership",
+            "leading",
+            "leads",
+            "management",
+            "market research",
+            "negotiation",
+            "pitch",
+            "pitching",
+            "presentation",
+            "prospecting",
+            "remote",
+            "sales",
+            "strategies",
+            "team",
+            "teams",
+            "transformation"
+          ]
+        },
+        {
+          "name": "Sales Compliance & Ethics",
+          "professions": [
+            "Account Manager",
+            "Brand Manager",
+            "Business Development Manager",
+            "Inside Sales Representative",
+            "Marketing Specialist",
+            "Sales Executive"
+          ],
+          "interests": [
+            "b2b sales",
+            "branding strategy",
+            "building",
+            "compliance",
+            "digital marketing",
+            "ethical",
+            "ethics",
+            "lead generation",
+            "market research",
+            "negotiation",
+            "pitching",
+            "practices",
+            "sales",
+            "through",
+            "trust"
+          ]
+        },
+        {
+          "name": "Sales Operations & Performance Analytics",
+          "professions": [
+            "Account Manager",
+            "Brand Manager",
+            "Business Development Manager",
+            "Inside Sales Representative",
+            "Marketing Specialist",
+            "Sales Executive"
+          ],
+          "interests": [
+            "analytics",
+            "b2b sales",
+            "branding strategy",
+            "digital marketing",
+            "lead generation",
+            "managers",
+            "market research",
+            "metrics",
+            "negotiation",
+            "performance",
+            "pitching",
+            "sales"
+          ]
+        },
+        {
+          "name": "Technical & Solutions Selling",
+          "professions": [
+            "Account Manager",
+            "Brand Manager",
+            "Business Development Manager",
+            "Inside Sales Representative",
+            "Marketing Specialist",
+            "Sales Executive"
+          ],
+          "interests": [
+            "b2b sales",
+            "branding strategy",
+            "digital marketing",
+            "lead generation",
+            "market research",
+            "negotiation",
+            "pitching",
+            "professionals",
+            "sales",
+            "tech",
+            "technical"
+          ]
+        },
+        {
+          "name": "Telemarketing & Inside Sales",
+          "professions": [
+            "Account Manager",
+            "Brand Manager",
+            "Business Development Manager",
+            "Inside Sales Representative",
+            "Marketing Specialist",
+            "Sales Executive"
+          ],
+          "interests": [
+            "b2b sales",
+            "branding strategy",
+            "digital marketing",
+            "lead generation",
+            "market research",
+            "negotiation",
+            "pitching",
+            "telemarketing"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Tech & IT Programmes",
+      "subcategories": [
+        {
+          "name": "Cyber & Information Security",
+          "professions": [
+            "Cyber Security Analyst",
+            "Front-End Developer",
+            "IT Auditor",
+            "QA Engineer",
+            "Software Engineer",
+            "UI/UX Designer"
+          ],
+          "interests": [
+            "analyst",
+            "cisa",
+            "coding",
+            "cyber",
+            "information security",
+            "junior",
+            "product design",
+            "security",
+            "software testing",
+            "user experience"
+          ]
+        },
+        {
+          "name": "IT Audit & Compliance",
+          "professions": [
+            "Cyber Security Analyst",
+            "Front-End Developer",
+            "IT Auditor",
+            "QA Engineer",
+            "Software Engineer",
+            "UI/UX Designer"
+          ],
+          "interests": [
+            "auditor",
+            "certified",
+            "cisa",
+            "coding",
+            "information",
+            "information security",
+            "product design",
+            "software testing",
+            "systems",
+            "user experience"
+          ]
+        },
+        {
+          "name": "Product & UI/UX Design",
+          "professions": [
+            "Cyber Security Analyst",
+            "Front-End Developer",
+            "IT Auditor",
+            "QA Engineer",
+            "Software Engineer",
+            "UI/UX Designer"
+          ],
+          "interests": [
+            "cisa",
+            "coding",
+            "design",
+            "information security",
+            "product design",
+            "software testing",
+            "ui/ux design course",
+            "uiux",
+            "user experience"
+          ]
+        },
+        {
+          "name": "Software & Web Development",
+          "professions": [
+            "Cyber Security Analyst",
+            "Front-End Developer",
+            "IT Auditor",
+            "QA Engineer",
+            "Software Engineer",
+            "UI/UX Designer"
+          ],
+          "interests": [
+            "cisa",
+            "coding",
+            "developer",
+            "development",
+            "frontend",
+            "information security",
+            "junior",
+            "product design",
+            "software testing",
+            "user experience"
+          ]
+        },
+        {
+          "name": "Software Quality Assurance & Testing",
+          "professions": [
+            "Cyber Security Analyst",
+            "Front-End Developer",
+            "IT Auditor",
+            "QA Engineer",
+            "Software Engineer",
+            "UI/UX Designer"
+          ],
+          "interests": [
+            "cisa",
+            "coding",
+            "information security",
+            "product design",
+            "software",
+            "software testing",
+            "software testing course",
+            "testing",
+            "user experience"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Training & Facilitation Courses",
+      "subcategories": [
+        {
+          "name": "Facilitation Skills",
+          "professions": [
+            "Cyber Security Analyst",
+            "Front-End Developer",
+            "IT Auditor",
+            "QA Engineer",
+            "Software Engineer",
+            "UI/UX Designer"
+          ],
+          "interests": [
+            "cisa",
+            "coding",
+            "facilitation",
+            "facilitation skills",
+            "information security",
+            "product design",
+            "skills",
+            "software testing",
+            "user experience"
+          ]
+        },
+        {
+          "name": "Train-The-Trainer Frameworks",
+          "professions": [
+            "Cyber Security Analyst",
+            "Front-End Developer",
+            "IT Auditor",
+            "QA Engineer",
+            "Software Engineer",
+            "UI/UX Designer"
+          ],
+          "interests": [
+            "advanced",
+            "cisa",
+            "coding",
+            "developing",
+            "information security",
+            "practical",
+            "product design",
+            "program",
+            "skills",
+            "software testing",
+            "survival",
+            "train",
+            "trainer",
+            "trainthetrainer",
+            "user experience"
+          ]
+        }
+      ]
+    }
+  ]
+}

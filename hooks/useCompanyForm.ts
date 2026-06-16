@@ -58,7 +58,7 @@ const useCompanyForm = (company: Company | null, close: () => void) => {
     setLoading(true);
 
     try {
-      const { data } = await apiClient.put("/companies", formData);
+      const { data } = await apiClient.put("/admin/companies", formData);
 
       console.log(data);
 
