@@ -229,9 +229,10 @@ const useTransactionForm = (
     // }
 
     const transactionErrors = checkTransaction(formData);
-    const enrollmentErrors = formData.enrollments.map((data) =>
-      checkEnrollment(data, formData.payerType),
-    );
+    const enrollmentErrors = formData.enrollments.map((data) => ({
+      transactionId: "",
+      ...checkEnrollment(data, formData.payerType),
+    }));
 
     console.log("Transaction Errors:", transactionErrors);
     console.log("Enrollment Errors:", enrollmentErrors);

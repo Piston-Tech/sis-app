@@ -5,6 +5,7 @@ const checkTransaction = (transaction: CreateTransactionData) => {
     discount: "",
     payerId: "",
     payerType: "",
+    total: ""
   };
 
   if (transaction.discount < 0) {

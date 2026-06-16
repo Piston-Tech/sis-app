@@ -147,7 +147,9 @@ const useSingleTransaction = (transactionId: string) => {
     addPayment(addPaymentFormData);
   };
 
-  const addPayment = async (formData: Omit<Payment, "id" | "paymentId">) => {
+  const addPayment = async (
+    formData: Omit<Payment, "id" | "paymentId" | "createdAt" | "updatedAt">
+  ) => {
     setLoadingPayment(true);
 
     try {

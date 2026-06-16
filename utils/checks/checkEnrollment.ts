@@ -1,7 +1,10 @@
 import { CreateEnrollmentData } from "@/types";
 
 const checkEnrollment = (enrollment: CreateEnrollmentData, type: string) => {
-  const errors: Record<keyof CreateEnrollmentData, string> = {
+  const errors: Record<
+    keyof Omit<CreateEnrollmentData, "transactionId">,
+    string
+  > = {
     studentId: "",
     classId: "",
     cba: "",

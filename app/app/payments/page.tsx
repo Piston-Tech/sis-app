@@ -2,30 +2,66 @@
 
 import { useState } from "react";
 import AppLayout from "@/components/AppLayout";
-import { ChevronRight, CheckCircle2, FileText, Calendar, Send } from "lucide-react";
+import {
+  ChevronRight,
+  CheckCircle2,
+  FileText,
+  Calendar,
+  Send,
+} from "lucide-react";
+import { Class, Course, Enrollment, Payment, Transaction } from "@/types";
+import CustomClass from "@/types/CustomClass";
 
 const UserPaymentsPage = () => {
   const [selectedTransactionId, setSelectedTransactionId] = useState<
-    number | null
+    string | null
   >(null);
-  
+
   // Payments Page Sub-tabs
-  const [paymentSubTab, setPaymentSubTab] = useState('History');
+  const [paymentSubTab, setPaymentSubTab] = useState("History");
 
   // Group enrollments by transaction
-  const transactionGroups = Array.from(new Set([].map(e => e.transactionId)))
-    .map(tid => {
-        const enrollments = [].filter(e => e.transactionId === tid) || [];
-        const transaction = enrollments[0]?.transaction;
-        const payments = transaction?.payments || [];
-        const totalPaid = payments.reduce((sum, p) => sum + p.amountPaid, 0);
-        const totalCost = enrollments.reduce((sum, e) => sum + (e.class?.customClass?.price || 300000), 0);
-        const discount = transaction?.discount || 0;
-        const outstanding = Math.max(0, totalCost - totalPaid - discount);
-        return { id: tid, transaction, enrollments, payments, totalPaid, totalCost, outstanding, discount };
-    });
+  const transactionGroups = Array.from(
+    new Set(([] as Array<Transaction>).map((e) => e.transactionId)),
+  ).map((tid) => {
+    const enrollments: Array<
+      Enrollment & {
+        transactionId: string;
+        transaction: Transaction & { payments: Array<Payment> };
+        class: Class & { customClass: CustomClass; course: Course };
+      }
+    > =
+      (
+        [] as Array<
+          Enrollment & {
+            transactionId: string;
+            transaction: Transaction & { payments: Array<Payment> };
+            class: Class & { customClass: CustomClass; course: Course };
+          }
+        >
+      ).filter((e) => e.transactionId === tid) || [];
+    const transaction = enrollments[0]?.transaction;
+    const payments = transaction?.payments || [];
+    const totalPaid = payments.reduce((sum, p) => sum + p.amountPaid, 0);
+    const totalCost = enrollments.reduce(
+      (sum, e) => sum + (e.class?.customClass?.price || 300000),
+      0,
+    );
+    const discount = transaction?.discount || 0;
+    const outstanding = Math.max(0, totalCost - totalPaid - discount);
+    return {
+      id: tid,
+      transaction,
+      enrollments,
+      payments,
+      totalPaid,
+      totalCost,
+      outstanding,
+      discount,
+    };
+  });
 
-  const renderTransactionDetail = (groupId: number) => {
+  const renderTransactionDetail = (groupId: string) => {
     const group = transactionGroups.find((t) => t.id === groupId);
     if (!group) return null;
 
@@ -308,7 +344,7 @@ const UserPaymentsPage = () => {
                       <tr
                         key={group.id}
                         onClick={() =>
-                          setSelectedTransactionId(group.id as number)
+                          setSelectedTransactionId(group.id as string)
                         }
                         className="group hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer transition-colors"
                       >

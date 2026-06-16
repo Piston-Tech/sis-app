@@ -15,12 +15,26 @@ import {
 import { useParams, useRouter } from "next/navigation";
 import ProgressRing from "@/components/ProgressRing";
 import apiClient from "@/services/apiClient";
+import { Enrollment, Class, Course, Session } from "@/types";
+import CustomClass from "@/types/CustomClass";
 
 const SingleEnrollmentPage = () => {
   const params = useParams<{ enrollmentId: string }>();
   const router = useRouter();
 
-  const [data, setData] = useState(null);
+  const [data, setData] = useState<
+    | (Enrollment & {
+        progress: number;
+        class: Class & {
+          customClass: CustomClass;
+          course: Course;
+          sessions: Array<Session>;
+        };
+      })
+    | null
+  >(null);
+
+  const canJoin = false;
 
   useEffect(() => {
     apiClient
