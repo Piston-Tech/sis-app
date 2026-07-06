@@ -40,6 +40,7 @@ const useStudentForm = (student: Student | null, close: () => void) => {
     companyId: "",
     membershipTier: "",
     persona: "",
+    metaData: ""
   });
 
   const [loading, setLoading] = useState(false);

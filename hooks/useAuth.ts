@@ -44,6 +44,7 @@ export function useAuth() {
     password: "",
     confirmPassword: "",
     verificationToken: "",
+    metaData: "",
   };
 
   const [errors, setErrors] = useState<StudentCreationErrors>(initErrors);
