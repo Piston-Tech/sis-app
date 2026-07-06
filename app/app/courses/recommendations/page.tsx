@@ -47,18 +47,18 @@ const TestPage = () => {
               key={course.id}
               className="bg-white dark:bg-slate-900 rounded-[3rem] border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col"
             >
-              <div className="h-48 bg-slate-100 dark:bg-slate-800 relative">
-                {/* <img
+              {/* <div className="h-48 bg-slate-100 dark:bg-slate-800 relative">
+                <img
                   src={`https://picsum.photos/seed/course-${course.id}/600/400`}
                   className="w-full h-full object-cover opacity-60"
                   alt={course.title}
                   referrerPolicy="no-referrer"
-                /> */}
+                /> 
+              </div> */}
+              <div className="p-8 flex-1 flex flex-col">
                 <div className="absolute top-6 left-6 px-4 py-1.5 bg-blue-600 text-white text-[10px] font-black uppercase tracking-widest rounded-full">
                   {course.category}
                 </div>
-              </div>
-              <div className="p-8 flex-1 flex flex-col">
                 <h3 className="text-xl font-black text-slate-900 dark:text-white mb-4 leading-tight">
                   {course.title}
                 </h3>
