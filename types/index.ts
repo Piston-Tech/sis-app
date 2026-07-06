@@ -70,6 +70,228 @@ export interface AppNotification {
   link?: string;
 }
 
+export interface Program {
+  id: string;
+  title: string;
+  courses: string[]; // Course IDs
+  progress: number;
+  description: string;
+  thumbnail: string;
+}
+
+export interface LearningPath {
+  id: string;
+  title: string;
+  goal: string;
+  milestones: {
+    id: string;
+    title: string;
+    type: "course" | "activity" | "project";
+    refId: string; // Course ID or other
+    isCompleted: boolean;
+  }[];
+}
+
+export interface AdminAttributes {
+  id: number;
+  email: string;
+  passwordHash: string;
+  firstName?: string;
+  lastName?: string;
+  role: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface ClassAttributes {
+  id: number;
+  classId: string;
+  courseId: number;
+  plannedStartDate: Date;
+  schedule: string;
+  isCustom: boolean;
+  course?: CourseAttributes;
+  sessions?: SessionAttributes[];
+  enrollments?: EnrollmentAttributes[];
+  customClass?: CustomClassAttributes;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface CompanyAttributes {
+  id: number;
+  companyId: string;
+  name: string;
+  industry: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface CourseAttributes {
+  id: number;
+  code: string;
+  title: string;
+  description: string;
+  duration: number;
+  category: string;
+  subCategory: string;
+  levelId: number;
+  link: string;
+  level?: CourseLevelAttributes;
+  classes?: ClassAttributes[];
+  prices?: PricingMatrixAttributes[];
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface CourseLevelAttributes {
+  id: number;
+  name: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface CustomClassAttributes {
+  id: number;
+  customClassId: string;
+  classId: number;
+  title: string;
+  description: string;
+  instructions: string;
+  price: number;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface EnrollmentAttributes {
+  id: number;
+  enrollmentId: string;
+  transactionId: number;
+  studentId: number;
+  classId: number;
+  cba: string;
+  delivery: string;
+  tierId: number;
+  status: string;
+  transaction?: TransactionAttributes;
+  student?: StudentAttributes;
+  class?: ClassAttributes;
+  tier?: TierAttributes;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface PaymentAttributes {
+  id: number;
+  paymentId: string;
+  transactionId: number;
+  category: string;
+  amountPaid: number;
+  status: string;
+  receiptSent: boolean;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface PricingMatrixAttributes {
+  id: number;
+  levelId: number;
+  duration: number;
+  tierId: number;
+  price: number;
+  currency: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+export interface SessionAttributes {
+  id: number;
+  sessionId: string;
+  classId: number;
+  date: Date;
+  startTime: string;
+  endTime: string;
+  delivery: string;
+  zoomLink: string;
+  venueDetails: string;
+  status: string;
+  notes: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface StudentAttributes {
+  id: number;
+  studentId: string;
+  prefix: string;
+  firstName: string;
+  middleName: string;
+  lastName: string;
+  email: string;
+  passwordHash: string;
+  phone: string;
+  companyId: number;
+  membershipTier: string;
+  persona: string;
+  googleId?: string;
+  linkedInId?: string;
+  enrollments?: EnrollmentAttributes[];
+  company?: CompanyAttributes;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface TierAttributes {
+  id: number;
+  name: string;
+  shortName: string;
+  subTitle: string;
+  description: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface TransactionAttributes {
+  id: number;
+  transactionId: string;
+  payerId: number;
+  payerType: string;
+  discount: number;
+  nextPaymentDate: Date;
+  payments?: PaymentAttributes[];
+  enrollments?: EnrollmentAttributes[];
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface UserAttributes {
+  id: number;
+  email: string;
+  passwordHash: string;
+  firstName: string;
+  lastName: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface DashboardData {
+  student: StudentAttributes;
+  enrollments: EnrollmentAttributes[];
+  transactions: TransactionAttributes[];
+  payments?: PaymentAttributes[];
+  sessions: SessionAttributes[];
+  nextSession?: SessionAttributes;
+  programs: Program[];
+  learningPath?: LearningPath;
+  summary: {
+    totalPaid: number;
+    totalOutstanding: number;
+    attendanceRate: number;
+    completionRate: number;
+    creditsEarned: number;
+    gpa?: number; // Optional if they want to mimic UoPeople
+  };
+}
+
 export type {
   Stats,
   Student,
