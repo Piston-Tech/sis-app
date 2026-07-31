@@ -23,10 +23,18 @@ import {
   Send,
   UserCheck,
 } from "lucide-react";
-// import apiClient from "@/services/apiClient";
-// import Link from "next/link";
+import apiClient from "@/services/apiClient";
+import Link from "next/link";
 import Loading from "./loading";
 import { DashboardData } from "@/types";
+import formatMoney from "@/utils/formatMoney";
+import Course from "@/types/Course";
+
+type RecommendedCourse = Course & {
+  popularity: number;
+  recommendationScore: number;
+  level: { id: number; name: string; prices: { price: number }[] };
+};
 
 const ProgressRing = ({
   percentage,
@@ -108,11 +116,6 @@ const UserDashboardPage = () => {
     number | null
   >(null);
 
-  // Dynamic Demo Simulator States for AI Studio Showcase
-  const [demoLearnerState, setDemoLearnerState] = useState<"ACTIVE" | "ALUMNI">(
-    "ACTIVE",
-  );
-  const [demoTierState, setDemoTierState] = useState<"Standard" | "Pro">("Pro");
   const [dailyFeedbackSubmitted, setDailyFeedbackSubmitted] =
     useState<boolean>(false);
   const [finalEvaluationSubmitted, setFinalEvaluationSubmitted] =
@@ -133,6 +136,9 @@ const UserDashboardPage = () => {
   const [finalComments, setFinalComments] = useState<string>("");
   const [showDirectionsModal, setShowDirectionsModal] =
     useState<boolean>(false);
+  const [alumniRecommendations, setAlumniRecommendations] = useState<
+    RecommendedCourse[]
+  >([]);
 
   // Home Page Sub-tabs
   const [homeSubTab, setHomeSubTab] = useState("Overview");
@@ -225,14 +231,190 @@ const UserDashboardPage = () => {
       : 0;
 
   const totalSessions = data?.sessions.length || 0;
-  const attendedSessions =  0;
+  const attendedSessions = 0;
   const attendanceRate =
     totalSessions > 0
       ? Math.round((attendedSessions / totalSessions) * 100)
       : 0;
 
-  const nextSession = data?.sessions.find((s) => s.status === "Upcoming");
-  const activeEnrollment = data?.enrollments[0];
+  const primaryTransactionGroup =
+    transactionGroups
+      .filter((group) => Boolean(group.transaction))
+      .sort(
+        (a, b) =>
+          new Date(b.transaction?.createdAt || 0).getTime() -
+          new Date(a.transaction?.createdAt || 0).getTime(),
+      )[0] || null;
+
+  const billingEntity = (() => {
+    const payerType = String(
+      primaryTransactionGroup?.transaction?.payerType || "",
+    ).toLowerCase();
+    const payerId = primaryTransactionGroup?.transaction?.payerId;
+
+    if (payerType.includes("company") || payerType.includes("corporate")) {
+      const companyName = data?.student?.company?.name;
+      return companyName
+        ? `${companyName} (Company)`
+        : `Company #${payerId || "N/A"}`;
+    }
+
+    if (
+      payerType.includes("student") ||
+      payerType.includes("individual") ||
+      payerType.includes("self")
+    ) {
+      const fullName = [
+        data?.student?.firstName,
+        data?.student?.middleName,
+        data?.student?.lastName,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .trim();
+      return fullName
+        ? `${fullName} (Student)`
+        : `Student #${payerId || "N/A"}`;
+    }
+
+    if (primaryTransactionGroup?.transaction?.payerType) {
+      return `${primaryTransactionGroup.transaction.payerType}${
+        payerId ? ` #${payerId}` : ""
+      }`;
+    }
+
+    return "Billing entity unavailable";
+  })();
+
+  const financialStatus =
+    (data?.summary?.totalOutstanding ?? 0) <= 0
+      ? "All Cleared"
+      : totalPaidAll > 0
+        ? "Partially Paid"
+        : "Payment Pending";
+
+  const financialStatusClasses =
+    financialStatus === "All Cleared"
+      ? "text-emerald-600 bg-emerald-100/60 dark:bg-emerald-500/10"
+      : financialStatus === "Partially Paid"
+        ? "text-amber-700 bg-amber-100/80 dark:bg-amber-500/10"
+        : "text-rose-700 bg-rose-100/80 dark:bg-rose-500/10";
+
+  const downloadInvoiceAndReceipt = () => {
+    const anchor = document.createElement("a");
+    anchor.href = "/api/student/invoice-pdf";
+    anchor.download = "invoice-receipt.pdf";
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+  };
+
+  const isSessionUpcomingOrOngoing = (session: any) => {
+    const status = String(session?.status || "").toLowerCase();
+    if (["upcoming", "in progress", "ongoing", "underway", "active"].includes(status)) {
+      return true;
+    }
+
+    const sessionDate = new Date(session?.date || 0);
+    if (Number.isNaN(sessionDate.getTime())) return false;
+
+    const [hoursStr, minutesStr] = String(session?.startTime || "00:00").split(":");
+    const start = new Date(sessionDate);
+    start.setHours(parseInt(hoursStr || "0"), parseInt(minutesStr || "0"), 0, 0);
+
+    const [endHoursStr, endMinutesStr] = String(session?.endTime || "23:59").split(":");
+    const end = new Date(sessionDate);
+    end.setHours(parseInt(endHoursStr || "23"), parseInt(endMinutesStr || "59"), 59, 999);
+
+    const now = Date.now();
+    return start.getTime() >= now || (start.getTime() <= now && now <= end.getTime());
+  };
+
+  const enrollmentHasUpcomingOrOngoingSession = (enrollment: any) => {
+    const classSessions = data?.sessions.filter((s) => s.classId === enrollment.classId) || [];
+    return classSessions.some((session) => isSessionUpcomingOrOngoing(session));
+  };
+
+  const activeEnrollment =
+    data?.enrollments.find((enrollment) => enrollmentHasUpcomingOrOngoingSession(enrollment)) ||
+    data?.enrollments.find((enrollment) => {
+      const status = String(enrollment.status || "").toLowerCase();
+      return !["completed", "cancelled", "canceled", "withdrawn"].includes(status);
+    }) ||
+    null;
+
+  const activeEnrollmentSessions = activeEnrollment
+    ? (data?.sessions.filter((session) => session.classId === activeEnrollment.classId) || [])
+    : [];
+
+  const nextSession =
+    activeEnrollmentSessions.find((session) => isSessionUpcomingOrOngoing(session)) ||
+    null;
+
+  const isActiveLearner = Boolean(activeEnrollment);
+
+  const resolveTierName = () => {
+    const enrollmentTier = activeEnrollment?.tier?.name || "";
+    if (enrollmentTier) return enrollmentTier;
+    return data?.student?.membershipTier || user?.membershipTier || "";
+  };
+
+  const tierName = resolveTierName();
+  const isProfessionalTier = /professional/i.test(tierName);
+  const tierVisualCategory: "Standard" | "Pro" = isProfessionalTier
+    ? "Pro"
+    : "Standard";
+
+  const learnerVisualState: "ACTIVE" | "ALUMNI" = isActiveLearner
+    ? "ACTIVE"
+    : "ALUMNI";
+
+  const activeCourseTitle =
+    activeEnrollment?.class?.customClass?.title ||
+    activeEnrollment?.class?.course?.title ||
+    "Active Course";
+  const activeCourseDescription =
+    activeEnrollment?.class?.customClass?.description ||
+    activeEnrollment?.class?.course?.description ||
+    "Course description will appear once available from the backend.";
+  const activeTierName = tierName || "Unassigned Tier";
+  const activeCohortLabel = activeEnrollment?.class?.classId || "N/A";
+  const activeDelivery = activeEnrollment?.delivery || "TBD";
+  const activeCba = activeEnrollment?.cba || "Assigned Advisor";
+  const activeSessionCompletion =
+    activeEnrollmentSessions.length > 0
+      ? Math.round(
+          (activeEnrollmentSessions.filter((session) => {
+            const status = String(session.status || "").toLowerCase();
+            return ["completed", "done"].includes(status);
+          }).length /
+            activeEnrollmentSessions.length) *
+            100,
+        )
+      : 0;
+
+  const activeSessionCards = activeEnrollmentSessions
+    .slice()
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    .slice(0, 4)
+    .map((session, index) => {
+      const status = String(session.status || "").toLowerCase();
+      const isCompleted = ["completed", "done"].includes(status);
+      const isActive = ["in progress", "ongoing", "underway", "active"].includes(status);
+
+      let badgeText = "Upcoming";
+      if (isCompleted) badgeText = "Completed";
+      if (isActive) badgeText = "Active Today";
+
+      return {
+        id: session.id,
+        dayLabel: `D${index + 1}`,
+        title: session.notes || `Session ${index + 1}`,
+        badgeText,
+        isCompleted,
+        isActive,
+      };
+    });
 
   const certCount = (() => {
     const lp: any = (data as any)?.learningPath;
@@ -309,6 +491,24 @@ const UserDashboardPage = () => {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    let isMounted = true;
+
+    apiClient
+      .post("/students/recommendations", {})
+      .then((response) => {
+        if (!isMounted) return;
+        setAlumniRecommendations(response.data?.data || []);
+      })
+      .catch((error) => {
+        console.error("Failed to fetch recommendations", error);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   if (loading) return <Loading />;
 
   const renderEnrolmentDetail = (enrollmentId: number) => {
@@ -358,9 +558,9 @@ const UserDashboardPage = () => {
                   <Calendar className="w-4 h-4 text-blue-500" />
                   <span className="text-xs font-bold uppercase tracking-widest">
                     Cohort{" "}
-                    {new Date(
-                      enrollment.class?.plannedStartDate!,
-                    ).getFullYear()}
+                    {enrollment.class?.plannedStartDate
+                      ? new Date(enrollment.class.plannedStartDate).getFullYear()
+                      : "TBD"}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -610,152 +810,100 @@ const UserDashboardPage = () => {
     </div>
   );
 
-  const renderStateSimulator = () => (
-    <div className="bg-slate-950 border border-blue-500/20 rounded-[2rem] p-6 text-white relative overflow-hidden shadow-2xl">
-      <div className="relative z-10 flex flex-col xl:flex-row xl:items-center justify-between gap-6">
-        <div className="space-y-1">
-          <span className="px-2.5 py-1 bg-blue-500/20 border border-blue-500/30 rounded-full text-[9px] font-black uppercase text-blue-400 tracking-widest">
-            ACADEMY STATE SELECTOR SIMULATOR
-          </span>
-          <p className="text-xs font-bold text-slate-300 mt-1 leading-tight">
-            Toggle Student status & hybrid tiers directly to live-test our
-            Career Portfolio Experience:
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-4 items-center">
-          <div className="bg-white/5 rounded-xl p-1 border border-white/10 flex items-center gap-1">
-            <button
-              onClick={() => {
-                setDemoLearnerState("ACTIVE");
-                setHomeSubTab("Overview");
-              }}
-              className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all ${
-                demoLearnerState === "ACTIVE"
-                  ? "bg-blue-600 text-white shadow-md"
-                  : "text-slate-400 hover:text-white"
-              }`}
-            >
-              Active Learner (Enrolled)
-            </button>
-            <button
-              onClick={() => {
-                setDemoLearnerState("ALUMNI");
-                setHomeSubTab("Overview");
-              }}
-              className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all ${
-                demoLearnerState === "ALUMNI"
-                  ? "bg-blue-600 text-white shadow-md"
-                  : "text-slate-400 hover:text-white"
-              }`}
-            >
-              Alumni (Between Courses)
-            </button>
-          </div>
+  const renderActiveHero = () => {
+    const courseTitle =
+      activeEnrollment?.class?.customClass?.title ||
+      activeEnrollment?.class?.course?.title ||
+      "Current Course";
+    const sessionDateLabel = nextSession
+      ? new Date(nextSession.date).toLocaleDateString(undefined, {
+          weekday: "long",
+          month: "long",
+          day: "numeric",
+          year: "numeric",
+        })
+      : "Schedule pending";
+    const sessionTimeLabel = nextSession
+      ? `${nextSession.startTime} - ${nextSession.endTime}`
+      : "Time to be announced";
+    const zoomLink = nextSession?.zoomLink;
 
-          {demoLearnerState === "ACTIVE" && (
-            <div className="bg-white/5 rounded-xl p-1 border border-white/10 flex items-center gap-1">
-              <button
-                onClick={() => setDemoTierState("Standard")}
-                className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all ${
-                  demoTierState === "Standard"
-                    ? "bg-slate-700 text-white"
-                    : "text-slate-400 hover:text-slate-200"
-                }`}
-              >
-                Standard Card
-              </button>
-              <button
-                onClick={() => setDemoTierState("Pro")}
-                className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all ${
-                  demoTierState === "Pro"
-                    ? "bg-slate-700 text-white"
-                    : "text-slate-400 hover:text-slate-200"
-                }`}
-              >
-                Pro (Hybrid/Onsite)
-              </button>
+    return (
+      <div className="bg-slate-900 border border-slate-800 rounded-[2.5rem] p-8 md:p-10 text-white overflow-hidden relative group shadow-2xl animate-in slide-in-from-top-4 duration-500">
+        <div className="relative z-10 flex flex-col xl:flex-row xl:items-center justify-between gap-8">
+          <div className="max-w-2xl space-y-4">
+            <div className="flex items-center gap-3">
+              <span className="w-2.5 h-2.5 bg-red-500 rounded-full animate-ping" />
+              <span className="text-[10px] text-blue-400 font-extrabold uppercase tracking-widest bg-blue-500/10 px-3 py-1 rounded-full border border-blue-500/20">
+                {tierVisualCategory === "Pro"
+                  ? "PROFESSIONAL TIER HYBRID COHORT"
+                  : "STANDARD TIER ONLINE COHORT"}
+              </span>
             </div>
-          )}
-        </div>
-      </div>
-      <div className="absolute top-0 right-0 w-80 h-80 bg-blue-600/5 rounded-full blur-3xl -z-0 translate-x-1/2" />
-    </div>
-  );
+            <h1 className="text-3xl md:text-4xl font-black tracking-tight leading-none text-white">
+              Next Active Live Session
+            </h1>
+            <p className="text-sm font-medium text-slate-300">
+              Upcoming module:{" "}
+              <span className="text-blue-400 font-black decoration-blue-500 underline underline-offset-4">
+                {courseTitle}
+              </span>
+            </p>
+            <div className="flex flex-wrap gap-4 text-slate-400 text-xs pt-2">
+              <span className="flex items-center gap-1.5 font-bold">
+                <Calendar className="w-4 h-4 text-blue-500" /> {sessionDateLabel}
+              </span>
+              <span className="flex items-center gap-1.5 font-bold">
+                <Clock className="w-4 h-4 text-blue-500" /> {sessionTimeLabel}
+                {nextSession ? " (Lagos Local Time)" : ""}
+              </span>
+            </div>
 
-  const renderActiveHero = () => (
-    <div className="bg-slate-900 border border-slate-800 rounded-[2.5rem] p-8 md:p-10 text-white overflow-hidden relative group shadow-2xl animate-in slide-in-from-top-4 duration-500">
-      <div className="relative z-10 flex flex-col xl:flex-row xl:items-center justify-between gap-8">
-        <div className="max-w-2xl space-y-4">
-          <div className="flex items-center gap-3">
-            <span className="w-2.5 h-2.5 bg-red-500 rounded-full animate-ping" />
-            <span className="text-[10px] text-blue-400 font-extrabold uppercase tracking-widest bg-blue-500/10 px-3 py-1 rounded-full border border-blue-500/20">
-              {demoTierState === "Pro"
-                ? "PRO HYBRID TRAINING BUNDLE COHORT"
-                : "STANDARD ONLINE EXEC COURSE"}
-            </span>
-          </div>
-          <h1 className="text-3xl md:text-4xl font-black tracking-tight leading-none text-white">
-            Next Active Live Session
-          </h1>
-          <p className="text-sm font-medium text-slate-300">
-            Upcoming module:{" "}
-            <span className="text-blue-400 font-black decoration-blue-500 underline underline-offset-4">
-              Agile Scrum Master: High-Velocity Sprint Execution & Governance
-            </span>
-          </p>
-          <div className="flex flex-wrap gap-4 text-slate-400 text-xs pt-2">
-            <span className="flex items-center gap-1.5 font-bold">
-              <Calendar className="w-4 h-4 text-blue-500" /> Saturday, June 13,
-              2026
-            </span>
-            <span className="flex items-center gap-1.5 font-bold">
-              <Clock className="w-4 h-4 text-blue-500" /> 09:00 AM - 04:00 PM
-              (Lagos Local Time)
-            </span>
-          </div>
-
-          <div className="pt-4">
-            {demoTierState === "Standard" ? (
-              <button
-                onClick={() => window.open("https://zoom.us", "_blank")}
-                className="px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-black text-xs uppercase tracking-wider transition-all shadow-lg hover:-translate-y-0.5"
-              >
-                Join Live Class via Zoom
-              </button>
-            ) : (
-              <div className="flex flex-col sm:flex-row gap-4 max-w-md">
+            <div className="pt-4">
+              {tierVisualCategory === "Standard" ? (
                 <button
-                  onClick={() => window.open("https://zoom.us", "_blank")}
-                  className="flex-1 px-6 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-black text-xs uppercase tracking-wider text-center transition-all shadow-lg shadow-blue-600/10"
+                  onClick={() => zoomLink && window.open(zoomLink, "_blank")}
+                  disabled={!zoomLink}
+                  className="px-8 py-4 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-700 text-white rounded-2xl font-black text-xs uppercase tracking-wider transition-all shadow-lg hover:-translate-y-0.5 disabled:cursor-not-allowed"
                 >
-                  Join Online (Zoom)
+                  {zoomLink ? "Join Live Class via Zoom" : "Zoom Link Not Published Yet"}
                 </button>
-                <button
-                  onClick={() => setShowDirectionsModal(true)}
-                  className="flex-1 px-6 py-4 bg-slate-800 hover:bg-slate-700 text-white rounded-2xl font-black text-xs uppercase tracking-wider border border-slate-700 hover:border-slate-600 text-center transition-all shadow-lg"
-                >
-                  Attend Onsite (Get Coord)
-                </button>
-              </div>
-            )}
+              ) : (
+                <div className="flex flex-col sm:flex-row gap-4 max-w-md">
+                  <button
+                    onClick={() => zoomLink && window.open(zoomLink, "_blank")}
+                    disabled={!zoomLink}
+                    className="flex-1 px-6 py-4 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-700 text-white rounded-2xl font-black text-xs uppercase tracking-wider text-center transition-all shadow-lg shadow-blue-600/10 disabled:cursor-not-allowed"
+                  >
+                    {zoomLink ? "Join Online (Zoom)" : "Zoom Link Pending"}
+                  </button>
+                  <button
+                    onClick={() => setShowDirectionsModal(true)}
+                    className="flex-1 px-6 py-4 bg-slate-800 hover:bg-slate-700 text-white rounded-2xl font-black text-xs uppercase tracking-wider border border-slate-700 hover:border-slate-600 text-center transition-all shadow-lg"
+                  >
+                    Attend Onsite (Get Coord)
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="p-8 bg-white/5 border border-white/10 rounded-[2rem] text-center min-w-[220px] flex flex-col justify-center shadow-xl backdrop-blur-sm self-start xl:self-center">
+            <span className="text-[10px] text-blue-400 font-black uppercase tracking-[0.2em] block mb-2">
+              Live Session Starts In
+            </span>
+            <span className="text-3xl font-black font-mono tracking-tighter block text-white animate-pulse">
+              {timeLeft || "SCHEDULE TBA"}
+            </span>
+            <span className="text-[9px] text-slate-500 font-extrabold block mt-3 uppercase tracking-widest">
+              {canJoin ? "Class Register Ready" : "Countdown in progress"}
+            </span>
           </div>
         </div>
-
-        <div className="p-8 bg-white/5 border border-white/10 rounded-[2rem] text-center min-w-[220px] flex flex-col justify-center shadow-xl backdrop-blur-sm self-start xl:self-center">
-          <span className="text-[10px] text-blue-400 font-black uppercase tracking-[0.2em] block mb-2">
-            Live Session Starts In
-          </span>
-          <span className="text-3xl font-black font-mono tracking-tighter block text-white animate-pulse">
-            00:14:52
-          </span>
-          <span className="text-[9px] text-slate-500 font-extrabold block mt-3 uppercase tracking-widest">
-            Class Register Ready
-          </span>
-        </div>
+        <div className="absolute top-0 right-0 w-80 h-80 bg-blue-600/10 rounded-full blur-3xl -z-0" />
       </div>
-      <div className="absolute top-0 right-0 w-80 h-80 bg-blue-600/10 rounded-full blur-3xl -z-0" />
-    </div>
-  );
+    );
+  };
 
   const renderAlumniHero = () => (
     <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[2.5rem] p-8 md:p-12 shadow-sm relative overflow-hidden animate-in slide-in-from-top-4 duration-500">
@@ -1009,30 +1157,40 @@ const UserDashboardPage = () => {
               <span className="text-xs font-bold text-slate-400 uppercase">
                 Billing Entity
               </span>
-              <span className="text-xs font-black text-slate-800 dark:text-white uppercase">
-                {user?.persona === "CORPORATE_ADMIN"
-                  ? "Enterprise Sponsor"
-                  : user?.persona === "SME_OWNER"
-                    ? "Private SME Co"
-                    : "Self-Paid Individual"}
+              <span className="text-xs font-black text-slate-800 dark:text-white uppercase text-right max-w-[65%]">
+                {billingEntity}
               </span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-xs font-bold text-slate-400 uppercase">
                 Status
               </span>
-              <span className="text-xs font-black text-emerald-600 bg-emerald-100/60 dark:bg-emerald-500/10 px-2.5 py-0.5 rounded-full uppercase tracking-wider">
-                All Cleared
+              <span
+                className={`text-xs font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider ${financialStatusClasses}`}
+              >
+                {financialStatus}
+              </span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-xs font-bold text-slate-400 uppercase">
+                Paid
+              </span>
+              <span className="text-xs font-black text-slate-800 dark:text-white font-mono">
+                {formatMoney(totalPaidAll, true, "Nigerian Naira")}
+              </span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-xs font-bold text-slate-400 uppercase">
+                Outstanding
+              </span>
+              <span className="text-xs font-black text-slate-800 dark:text-white font-mono">
+                {formatMoney(data?.summary?.totalOutstanding ?? 0, true, "Nigerian Naira")}
               </span>
             </div>
           </div>
 
           <button
-            onClick={() =>
-              alert(
-                "Downloading official tax e-receipt and corporate paid invoice backing sheet (PDF)",
-              )
-            }
+            onClick={downloadInvoiceAndReceipt}
             className="w-full py-4 bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-black text-[10px] uppercase tracking-widest rounded-xl hover:-translate-y-0.5 transition-all flex items-center justify-center gap-1.5 shadow-sm"
           >
             <Download className="w-4 h-4" />
@@ -1108,7 +1266,7 @@ const UserDashboardPage = () => {
                 </h3>
               </div>
               <span className="text-[9px] font-black uppercase bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 px-3 py-1 rounded-full tracking-widest">
-                Enrolled Active
+                {activeTierName}
               </span>
             </div>
 
@@ -1119,92 +1277,72 @@ const UserDashboardPage = () => {
                 </div>
                 <div>
                   <h4 className="text-md font-black text-slate-900 dark:text-white uppercase leading-snug">
-                    Agile Scrum Master Professional certification
+                    {activeCourseTitle}
                   </h4>
                   <p className="text-[10px] text-slate-400 font-bold uppercase mt-0.5">
-                    PMI REP Center Id: 4120 • 24 CEUs
+                    Cohort: {activeCohortLabel} • Delivery: {activeDelivery}
                   </p>
                 </div>
               </div>
               <p className="text-xs text-slate-500 font-semibold leading-relaxed">
-                Develop highly practical team backlog ownership skills,
-                iterative velocity sizing, Kanban workspace routing, and
-                executive project execution parameters. Led by PMI board
-                certified fellows.
+                {activeCourseDescription}
               </p>
             </div>
 
             <div className="space-y-3 pt-2">
               <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest block">
-                Interactive Class Cohort Map (2 - 8 day seminar)
+                Interactive Class Cohort Map
               </span>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-slate-800/50 flex justify-between items-center">
-                  <div className="flex items-center gap-3">
-                    <span className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-600 dark:bg-emerald-500/10 flex items-center justify-center font-black text-xs">
-                      D1
-                    </span>
-                    <div>
-                      <h5 className="text-[11px] font-black text-slate-800 dark:text-white">
-                        Foundations & Sprints
-                      </h5>
-                      <span className="text-[9px] text-slate-400 uppercase font-bold">
-                        Completed
-                      </span>
+                {activeSessionCards.length > 0 ? (
+                  activeSessionCards.map((sessionCard) => (
+                    <div
+                      key={sessionCard.id}
+                      className={`p-4 rounded-2xl border flex justify-between items-center ${
+                        sessionCard.isActive
+                          ? "bg-slate-100 dark:bg-white/10 border-slate-200 dark:border-slate-700"
+                          : "bg-slate-50 dark:bg-white/5 border-slate-100 dark:border-slate-800/50"
+                      } ${!sessionCard.isCompleted && !sessionCard.isActive ? "opacity-80" : ""}`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <span
+                          className={`w-8 h-8 rounded-lg flex items-center justify-center font-black text-xs ${
+                            sessionCard.isCompleted
+                              ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-500/10"
+                              : sessionCard.isActive
+                                ? "bg-blue-600 text-white animate-pulse"
+                                : "bg-slate-200 dark:bg-slate-800 text-slate-500"
+                          }`}
+                        >
+                          {sessionCard.dayLabel}
+                        </span>
+                        <div>
+                          <h5 className="text-[11px] font-black text-slate-800 dark:text-white">
+                            {sessionCard.title}
+                          </h5>
+                          <span
+                            className={`text-[9px] uppercase font-bold ${
+                              sessionCard.isActive
+                                ? "text-blue-600 dark:text-blue-400"
+                                : "text-slate-400"
+                            }`}
+                          >
+                            {sessionCard.badgeText}
+                          </span>
+                        </div>
+                      </div>
+                      {sessionCard.isCompleted ? (
+                        <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                      ) : sessionCard.isActive ? (
+                        <span className="w-2 h-2 rounded-full bg-blue-500 animate-ping" />
+                      ) : null}
                     </div>
+                  ))
+                ) : (
+                  <div className="p-6 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-slate-800/50 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
+                    No scheduled sessions have been published for this enrollment yet.
                   </div>
-                  <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                </div>
-
-                <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-slate-800/50 flex justify-between items-center">
-                  <div className="flex items-center gap-3">
-                    <span className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-600 dark:bg-emerald-500/10 flex items-center justify-center font-black text-xs">
-                      D2
-                    </span>
-                    <div>
-                      <h5 className="text-[11px] font-black text-slate-800 dark:text-white">
-                        Estimations & Velocity
-                      </h5>
-                      <span className="text-[9px] text-slate-400 uppercase font-bold">
-                        Completed
-                      </span>
-                    </div>
-                  </div>
-                  <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                </div>
-
-                <div className="p-4 bg-slate-100 dark:bg-white/10 rounded-2xl border border-slate-200 dark:border-slate-700 flex justify-between items-center">
-                  <div className="flex items-center gap-3">
-                    <span className="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center font-black text-xs animate-pulse">
-                      D3
-                    </span>
-                    <div>
-                      <h5 className="text-[11px] font-black text-slate-900 dark:text-white">
-                        Backlogs & Governance
-                      </h5>
-                      <span className="text-[9px] text-blue-600 dark:text-blue-400 uppercase font-bold">
-                        Active Today
-                      </span>
-                    </div>
-                  </div>
-                  <span className="w-2 h-2 rounded-full bg-blue-500 animate-ping" />
-                </div>
-
-                <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-slate-800/50 flex justify-between items-center opacity-60">
-                  <div className="flex items-center gap-3">
-                    <span className="w-8 h-8 rounded-lg bg-slate-200 dark:bg-slate-800 text-slate-500 flex items-center justify-center font-black text-xs">
-                      D4
-                    </span>
-                    <div>
-                      <h5 className="text-[11px] font-black text-slate-800 dark:text-white">
-                        Exam Board & Plaques
-                      </h5>
-                      <span className="text-[9px] text-slate-400 uppercase font-bold">
-                        Tomorrow
-                      </span>
-                    </div>
-                  </div>
-                </div>
+                )}
               </div>
             </div>
           </section>
@@ -1306,11 +1444,16 @@ const UserDashboardPage = () => {
 
             <div className="flex flex-col md:flex-row items-center md:items-start gap-6 p-6 bg-slate-50 dark:bg-white/5 rounded-3xl border border-slate-100 dark:border-white/5">
               <div className="w-20 h-20 bg-gradient-to-tr from-blue-600 to-indigo-600 text-white rounded-[2rem] shadow-lg flex items-center justify-center font-black text-2xl border-4 border-white dark:border-slate-900">
-                WT
+                {(activeCba || "AD")
+                  .split(" ")
+                  .map((part) => part[0])
+                  .join("")
+                  .slice(0, 2)
+                  .toUpperCase()}
               </div>
               <div className="space-y-2 text-center md:text-left flex-1">
                 <h4 className="text-md font-black text-slate-900 dark:text-white uppercase">
-                  Dr. Wale Thompson, PMP, CSP-SM
+                  {activeCba || "Assigned Program Advisor"}
                 </h4>
                 <p className="text-[10px] text-blue-600 font-black uppercase tracking-wider">
                   Lead Agile Architect & PMI Board Fellow
@@ -1408,70 +1551,15 @@ const UserDashboardPage = () => {
   };
 
   const renderAlumniBody = () => {
-    // Tailored cross-sell recommendation cards per user role
-    const getRecs = () => {
-      if (user?.persona === "SME_OWNER") {
-        return [
-          {
-            title: "Primavera P6 Advanced Planning & Boardroom Scheduling",
-            desc: "Accelerate structural PM growth, map board tasks, optimize corporate dependencies.",
-            duration: "3 Days block",
-            cost: "₦180,000",
-            orig: "₦250,000",
-          },
-          {
-            title: "Mini-MBA: Business Governance & Venture Raising",
-            desc: "Pitch and raise venture seed funding with direct legal compliance registers.",
-            duration: "4 Days intensive",
-            cost: "₦220,000",
-            orig: "₦320,000",
-          },
-        ];
-      } else if (user?.persona === "JOB_SEEKER") {
-        return [
-          {
-            title: "Agile Scrum Practitioner Boot Camp",
-            desc: "Secure technical scrum executor qualifications and sync real-world case practices.",
-            duration: "2 Days bootcamp",
-            cost: "₦85,000",
-            orig: "₦120,000",
-          },
-          {
-            title: "Business Analysis Masterclass & Placement Pipe",
-            desc: "Train extensively on modeling requirements for multinationals with HR referrals.",
-            duration: "4 Weeks schedule",
-            cost: "₦160,000",
-            orig: "₦210,000",
-          },
-        ];
-      } else {
-        return [
-          {
-            title: "Advanced Executive Leadership & Agile Scaling structures",
-            desc: "Optimize team execution and coordinate cross-functional contract governance.",
-            duration: "5 Days Retreat",
-            cost: "₦240,000",
-            orig: "₦350,000",
-          },
-          {
-            title: "Primavera P6 Portfolios Scheduling & Primavera Planning",
-            desc: "Advanced planning matrices, resource leveling pools, and risk contingency plans.",
-            duration: "3 Days block",
-            cost: "₦190,000",
-            orig: "₦280,000",
-          },
-        ];
-      }
-    };
-
-    const recsList = getRecs();
+    const recsList = alumniRecommendations.slice(0, 4);
 
     return (
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
         {/* Left Column: Recommendation Engine */}
         <div className="lg:col-span-8 space-y-8">
           <section className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[2.5rem] p-8 shadow-sm space-y-6">
-            <div>
+            <div className="flex items-start justify-between gap-4">
+              <div>
               <span className="text-[10px] font-black uppercase text-blue-500 tracking-wider">
                 Continuous Education Engine
               </span>
@@ -1482,53 +1570,70 @@ const UserDashboardPage = () => {
                 Based on your specialized upskilling achievements, our academic
                 directors recommend continuing your competence pathways:
               </p>
+              </div>
+              <Link
+                href="/app/courses/recommendations"
+                className="w-30 text-center py-2.5 px-4 bg-slate-900 dark:bg-white dark:text-slate-900 text-white font-black text-[9px] uppercase tracking-widest rounded-xl transition-all"
+              >
+                View All
+              </Link>
             </div>
 
             <div className="space-y-6">
+              {recsList.length === 0 && (
+                <div className="p-6 bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-slate-800/50 rounded-3xl text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
+                  No recommendations available yet. Visit the recommendations page to explore courses.
+                </div>
+              )}
               {recsList.map((rec, index) => (
                 <div
-                  key={index}
-                  className="p-6 bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-slate-800/50 rounded-3xl flex flex-col md:flex-row md:items-center justify-between gap-6 hover:border-blue-500/30 transition-all group"
+                  key={rec.id || index}
+                  className="p-5 sm:p-6 bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-slate-800/50 rounded-3xl grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_220px] gap-5 lg:gap-6 hover:border-blue-500/30 transition-all group"
                 >
-                  <div className="space-y-2 flex-1">
+                  <div className="space-y-2 min-w-0">
                     <span className="px-2.5 py-0.5 bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 text-[8px] font-black uppercase rounded tracking-wider">
-                      Alumni Benefit: -30% Applied
+                      Personalized Recommendation
                     </span>
-                    <h4 className="text-sm font-black text-slate-800 dark:text-white uppercase">
+                    <h4 className="text-sm font-black text-slate-800 dark:text-white uppercase leading-noraml">
                       {rec.title}
                     </h4>
-                    <p className="text-xs text-slate-500 leading-normal font-medium">
-                      {rec.desc}
-                    </p>
-                    <div className="flex items-center gap-3 text-[10px] text-slate-400 font-bold uppercase mt-1">
+                    {/* <p className="text-xs text-slate-500 leading-relaxed font-medium max-h-[3.4rem] overflow-hidden">
+                      {rec.description || "No description available."}
+                    </p> */}
+                    <div className="flex flex-wrap items-center gap-2.5 text-[10px] text-slate-400 font-bold uppercase mt-1">
                       <span className="flex items-center gap-1 font-semibold">
-                        <Clock className="w-3.5 h-3.5" /> {rec.duration}
+                        <Clock className="w-3.5 h-3.5 shrink-0" />
+                        {rec.duration ? `${rec.duration} days` : "Self-paced"}
                       </span>
                     </div>
                   </div>
 
-                  <div className="text-left md:text-right space-y-3 min-w-[140px] pt-4 md:pt-0 border-t md:border-t-0 md:border-l border-slate-200 dark:border-slate-800 md:pl-6">
+                  <div className="text-left lg:text-right space-y-3 pt-4 lg:pt-0 border-t lg:border-t-0 lg:border-l border-slate-200 dark:border-slate-800 lg:pl-5">
                     <div>
                       <span className="text-[9px] text-slate-400 uppercase font-black tracking-wider block">
-                        Exclusive Alumni Fee
+                        Price Range
                       </span>
-                      <span className="text-xl font-black text-slate-950 dark:text-white font-mono">
-                        {rec.cost}
-                      </span>
-                      <span className="text-[10px] text-slate-400 line-through font-mono block">
-                        {rec.orig}
+                      <span className="text-base sm:text-lg font-black text-slate-950 dark:text-white font-mono break-words leading-tight block mt-1">
+                        {(() => {
+                          const prices = rec.level?.prices?.map((price) => price.price) || [];
+                          if (!prices.length) return "Contact for pricing";
+
+                          const minPrice = Math.min(...prices);
+                          const maxPrice = Math.max(...prices);
+                          return `${formatMoney(minPrice, true, "Nigerian Naira")} - ${formatMoney(maxPrice, true, "Nigerian Naira")}`;
+                        })()}
                       </span>
                     </div>
-                    <button
-                      onClick={() =>
-                        alert(
-                          `Redirecting to registration portal with exclusive scholarship referral code applied!`,
-                        )
+                    <Link
+                      target="_blank"
+                      href={
+                        rec.link ||
+                        `https://pistonandfusion.org/programs?search=${encodeURIComponent(rec.title)}`
                       }
-                      className="py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white font-black text-[9px] uppercase tracking-widest rounded-xl transition-all"
+                      className="inline-flex items-center justify-center w-full lg:w-auto py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white font-black text-[9px] uppercase tracking-widest rounded-xl transition-all"
                     >
-                      Enrol with Code
-                    </button>
+                      Enrol
+                    </Link>
                   </div>
                 </div>
               ))}
@@ -1553,7 +1658,7 @@ const UserDashboardPage = () => {
               </div>
               <button
                 onClick={() =>
-                  window.open("https://wa.me/2348000000000", "_blank")
+                  window.open("https://pistonandfusion.org/contact-us", "_blank")
                 }
                 className="py-3 px-5 bg-blue-600 hover:bg-blue-700 text-white font-black text-[9px] uppercase tracking-widest rounded-xl transition-all w-full sm:w-auto text-center"
               >
@@ -1874,11 +1979,8 @@ const UserDashboardPage = () => {
         {/* Onsite directions / logistics modal */}
         {showDirectionsModal && renderDirectionsModal()}
 
-        {/* Dynamic Simulator Interactive Widget */}
-        {renderStateSimulator()}
-
         {/* Dynamic morphing Hero Header */}
-        {demoLearnerState === "ACTIVE"
+        {learnerVisualState === "ACTIVE"
           ? renderActiveHero()
           : renderAlumniHero()}
 
@@ -1887,7 +1989,7 @@ const UserDashboardPage = () => {
 
         {/* Body content rendering corresponding to exact active tab status */}
         {homeSubTab === "Overview" &&
-          (demoLearnerState === "ACTIVE"
+          (learnerVisualState === "ACTIVE"
             ? renderActiveBody()
             : renderAlumniBody())}
 

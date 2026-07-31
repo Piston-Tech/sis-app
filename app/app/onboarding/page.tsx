@@ -8,10 +8,8 @@ import handleRequestError from "@/utils/handleRequestError";
 import { useRouter } from "next/navigation";
 import Loading from "@/app/app/loading";
 import { ErrorMsg } from "@/components/Form";
+import useProfessionCategories from "@/hooks/useProfessionCategories";
 import {
-  getCategories,
-  getSubcategoriesByCategory,
-  getProfessionsBySubcategory,
   getInterestsBySubcategory,
 } from "@/utils/recommendationTreeUtils";
 
@@ -55,7 +53,14 @@ const OnboardingPage = () => {
   const [error, setError] = useState("");
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
-  const [categories] = useState(getCategories());
+  const {
+    categories,
+    loading: categoriesLoading,
+    error: categoriesError,
+    getSubcategoriesByCategory,
+    getProfessionsBySubcategory,
+  } = useProfessionCategories();
+
   const [currentSubcategories, setCurrentSubcategories] = useState<string[]>([]);
   const [currentProfessions, setCurrentProfessions] = useState<string[]>([]);
   const [currentInterests, setCurrentInterests] = useState<string[]>([]);
@@ -63,6 +68,8 @@ const OnboardingPage = () => {
   const [goalSubcategories, setGoalSubcategories] = useState<string[]>([]);
   const [goalProfessions, setGoalProfessions] = useState<string[]>([]);
   const [goalInterests, setGoalInterests] = useState<string[]>([]);
+  const [isCustomCurrent, setIsCustomCurrent] = useState(false);
+  const [isCustomGoal, setIsCustomGoal] = useState(false);
 
   const [formData, setFormData] = useState<FormDataType>({
     prefix: "",
@@ -94,6 +101,11 @@ const OnboardingPage = () => {
       }));
     }
   }, [currentUser, router]);
+
+  useEffect(() => {
+    if (!categoriesError) return;
+    setError(categoriesError);
+  }, [categoriesError]);
 
   const careerStageOptions = [
     "Student/Fresh Grad",
@@ -131,6 +143,7 @@ const OnboardingPage = () => {
     setCurrentSubcategories(subs);
     setCurrentProfessions([]);
     setCurrentInterests([]);
+    setIsCustomCurrent(false);
   };
 
   const handleCurrentSubcategoryChange = (subcategory: string) => {
@@ -148,6 +161,7 @@ const OnboardingPage = () => {
     );
     setCurrentProfessions(profs);
     setCurrentInterests(interests);
+    setIsCustomCurrent(false);
   };
 
   const handleGoalCategoryChange = (category: string) => {
@@ -159,6 +173,7 @@ const OnboardingPage = () => {
     setGoalSubcategories(subs);
     setGoalProfessions([]);
     setGoalInterests([]);
+    setIsCustomGoal(false);
   };
 
   const handleGoalSubcategoryChange = (subcategory: string) => {
@@ -176,6 +191,7 @@ const OnboardingPage = () => {
     );
     setGoalProfessions(profs);
     setGoalInterests(interests);
+    setIsCustomGoal(false);
   };
 
   const toggleTag = (tag: string) => {
@@ -269,7 +285,7 @@ const OnboardingPage = () => {
 
       getCurrentUser();
       router.replace("/");
-    } catch (e: any) {
+    } catch (e: unknown) {
       handleRequestError(e, setError, (errors) =>
         setError((Object.values(errors)[0] as string) || "An error occurred")
       );
@@ -311,7 +327,7 @@ const OnboardingPage = () => {
                 Your Profile
               </h2>
               <p className="text-slate-600 mb-6">
-                Let's start with your basic information
+                Let&apos;s start with your basic information
               </p>
 
               <div className="space-y-4">
@@ -454,7 +470,7 @@ const OnboardingPage = () => {
               <div className="space-y-6">
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-3">
-                    What's your current career stage? *
+                    What&apos;s your current career stage? *
                   </label>
                   <div className="space-y-2">
                     {careerStageOptions.map((option) => (
@@ -482,7 +498,7 @@ const OnboardingPage = () => {
 
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-3">
-                    What's your primary goal? *
+                    What&apos;s your primary goal? *
                   </label>
                   <div className="space-y-2">
                     {primaryGoalOptions.map((option) => (
@@ -529,13 +545,18 @@ const OnboardingPage = () => {
                   <select
                     value={formData.currentProfession.category || ""}
                     onChange={(e) => handleCurrentCategoryChange(e.target.value)}
+                    disabled={categoriesLoading}
                     className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 ${
                       formErrors.currentCategory
                         ? "border-red-500 focus:ring-red-500"
                         : "border-slate-300 focus:ring-blue-500"
                     }`}
                   >
-                    <option value="">Select a category</option>
+                    <option value="">
+                      {categoriesLoading
+                        ? "Loading categories..."
+                        : "Select a category"}
+                    </option>
                     {categories.map((cat) => (
                       <option key={cat} value={cat}>
                         {cat}
@@ -588,16 +609,31 @@ const OnboardingPage = () => {
                     Profession *
                   </label>
                   <select
-                    value={formData.currentProfession.profession || ""}
-                    onChange={(e) =>
+                    value={isCustomCurrent ? "__custom__" : formData.currentProfession.profession || ""}
+                    onChange={(e) => {
+                      const value = e.target.value;
+
+                      if (value === "__custom__") {
+                        setIsCustomCurrent(true);
+                        setFormData({
+                          ...formData,
+                          currentProfession: {
+                            ...formData.currentProfession,
+                            profession: "",
+                          },
+                        });
+                        return;
+                      }
+
+                      setIsCustomCurrent(false);
                       setFormData({
                         ...formData,
                         currentProfession: {
                           ...formData.currentProfession,
-                          profession: e.target.value,
+                          profession: value,
                         },
-                      })
-                    }
+                      });
+                    }}
                     disabled={!formData.currentProfession.subCategory}
                     className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 disabled:bg-slate-100 disabled:cursor-not-allowed ${
                       formErrors.currentProfession
@@ -615,7 +651,27 @@ const OnboardingPage = () => {
                         {prof}
                       </option>
                     ))}
+                    {formData.currentProfession.subCategory && (
+                      <option value="__custom__">Other (Type custom profession)</option>
+                    )}
                   </select>
+                  {isCustomCurrent && (
+                    <input
+                      type="text"
+                      placeholder="Enter your current profession"
+                      value={formData.currentProfession.profession || ""}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          currentProfession: {
+                            ...formData.currentProfession,
+                            profession: e.target.value,
+                          },
+                        })
+                      }
+                      className="w-full mt-2 p-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  )}
                   {formErrors.currentProfession && (
                     <p className="text-red-500 text-xs mt-1">
                       {formErrors.currentProfession}
@@ -679,13 +735,18 @@ const OnboardingPage = () => {
                   <select
                     value={formData.goalProfession.category || ""}
                     onChange={(e) => handleGoalCategoryChange(e.target.value)}
+                    disabled={categoriesLoading}
                     className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 ${
                       formErrors.goalCategory
                         ? "border-red-500 focus:ring-red-500"
                         : "border-slate-300 focus:ring-blue-500"
                     }`}
                   >
-                    <option value="">Select a category</option>
+                    <option value="">
+                      {categoriesLoading
+                        ? "Loading categories..."
+                        : "Select a category"}
+                    </option>
                     {categories.map((cat) => (
                       <option key={cat} value={cat}>
                         {cat}
@@ -738,16 +799,31 @@ const OnboardingPage = () => {
                     Profession *
                   </label>
                   <select
-                    value={formData.goalProfession.profession || ""}
-                    onChange={(e) =>
+                    value={isCustomGoal ? "__custom__" : formData.goalProfession.profession || ""}
+                    onChange={(e) => {
+                      const value = e.target.value;
+
+                      if (value === "__custom__") {
+                        setIsCustomGoal(true);
+                        setFormData({
+                          ...formData,
+                          goalProfession: {
+                            ...formData.goalProfession,
+                            profession: "",
+                          },
+                        });
+                        return;
+                      }
+
+                      setIsCustomGoal(false);
                       setFormData({
                         ...formData,
                         goalProfession: {
                           ...formData.goalProfession,
-                          profession: e.target.value,
+                          profession: value,
                         },
-                      })
-                    }
+                      });
+                    }}
                     disabled={!formData.goalProfession.subCategory}
                     className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 disabled:bg-slate-100 disabled:cursor-not-allowed ${
                       formErrors.goalProfession
@@ -765,7 +841,27 @@ const OnboardingPage = () => {
                         {prof}
                       </option>
                     ))}
+                    {formData.goalProfession.subCategory && (
+                      <option value="__custom__">Other (Type custom profession)</option>
+                    )}
                   </select>
+                  {isCustomGoal && (
+                    <input
+                      type="text"
+                      placeholder="Enter your goal profession"
+                      value={formData.goalProfession.profession || ""}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          goalProfession: {
+                            ...formData.goalProfession,
+                            profession: e.target.value,
+                          },
+                        })
+                      }
+                      className="w-full mt-2 p-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  )}
                   {formErrors.goalProfession && (
                     <p className="text-red-500 text-xs mt-1">
                       {formErrors.goalProfession}

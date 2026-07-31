@@ -255,6 +255,7 @@ export interface TransactionAttributes {
   transactionId: string;
   payerId: number;
   payerType: string;
+  total: number;
   discount: number;
   nextPaymentDate: Date;
   payments?: PaymentAttributes[];

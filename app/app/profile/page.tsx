@@ -4,16 +4,61 @@ import { useEffect, useState, useRef } from "react";
 import { useGlobal } from "@/app/GlobalProvider";
 import AppLayout from "@/components/AppLayout";
 import TagInput from "@/components/TagInput";
-import { BookOpen, Moon, User } from "lucide-react";
+import { Moon, User } from "lucide-react";
 import apiClient from "@/services/apiClient";
 import handleRequestError from "@/utils/handleRequestError";
+import useProfessionCategories from "@/hooks/useProfessionCategories";
 import {
-  getCategories,
-  getSubcategoriesByCategory,
-  getProfessionsBySubcategory,
   getInterestsBySubcategory,
   getAllInterests,
 } from "@/utils/recommendationTreeUtils";
+
+interface ProfessionMeta {
+  category?: string;
+  subCategory?: string;
+  profession?: string;
+  level?: number;
+}
+
+interface ProfileMeta {
+  currentProfession?: ProfessionMeta;
+  goalProfession?: ProfessionMeta;
+  prioritise?: "Goal Profession" | "Current Profession" | "Both";
+  preferredTags?: string[];
+}
+
+interface UserWithMeta {
+  id: number;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  phone?: string;
+  metaData?: ProfileMeta;
+}
+
+interface ProfileUpdatePayload {
+  id: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  metaData: {
+    currentProfession: {
+      category: string;
+      subCategory: string;
+      profession: string;
+      level: number;
+    };
+    goalProfession: {
+      category: string;
+      subCategory: string;
+      profession: string;
+      level: number;
+    };
+    prioritise: "Goal Profession" | "Current Profession" | "Both";
+    preferredTags: string[];
+  };
+}
 
 const UserProfilePage = () => {
   const { currentUser: user, getCurrentUser } = useGlobal();
@@ -22,8 +67,15 @@ const UserProfilePage = () => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
+  const {
+    categories,
+    loading: categoriesLoading,
+    error: categoriesError,
+    getSubcategoriesByCategory,
+    getProfessionsBySubcategory,
+  } = useProfessionCategories();
+
   // Dropdown options
-  const [categories, setCategories] = useState<string[]>([]);
   const [currentSubcategories, setCurrentSubcategories] = useState<string[]>(
     [],
   );
@@ -31,11 +83,8 @@ const UserProfilePage = () => {
   const [currentProfessions, setCurrentProfessions] = useState<string[]>([]);
   const [goalProfessions, setGoalProfessions] = useState<string[]>([]);
   const [allInterests, setAllInterests] = useState<string[]>([]);
-  const [currentSubcategoryInterests, setCurrentSubcategoryInterests] =
-    useState<string[]>([]);
-  const [goalSubcategoryInterests, setGoalSubcategoryInterests] = useState<
-    string[]
-  >([]);
+  const [, setCurrentSubcategoryInterests] = useState<string[]>([]);
+  const [, setGoalSubcategoryInterests] = useState<string[]>([]);
 
   const currentCategoryRef = useRef<string>("");
   const goalCategoryRef = useRef<string>("");
@@ -68,17 +117,20 @@ const UserProfilePage = () => {
   const [isCustomGoal, setIsCustomGoal] = useState(false);
 
   useEffect(() => {
-    // Load dropdown options
-    const cats = getCategories();
     const ints = getAllInterests();
-    setCategories(cats);
     setAllInterests(ints);
   }, []);
 
   useEffect(() => {
+    if (!categoriesError) return;
+    setError(categoriesError);
+  }, [categoriesError]);
+
+  useEffect(() => {
     if (!user) return;
 
-    const meta = (user as any).metaData || {};
+    const typedUser = user as UserWithMeta;
+    const meta = typedUser.metaData || {};
     const currentMeta = meta.currentProfession || {};
     const goalMeta = meta.goalProfession || {};
 
@@ -148,7 +200,7 @@ const UserProfilePage = () => {
         );
       }
     }
-  }, [user]);
+  }, [user, getSubcategoriesByCategory, getProfessionsBySubcategory]);
 
   useEffect(() => {
     const categoryChanged =
@@ -180,7 +232,7 @@ const UserProfilePage = () => {
     }
 
     currentCategoryRef.current = formData.currentProfessionCategory;
-  }, [formData.currentProfessionCategory]);
+  }, [formData.currentProfessionCategory, getSubcategoriesByCategory]);
 
   useEffect(() => {
     if (
@@ -213,7 +265,9 @@ const UserProfilePage = () => {
   }, [
     formData.currentProfessionCategory,
     formData.currentProfessionSubCategory,
+    formData.currentProfession,
     isCustomCurrent,
+    getProfessionsBySubcategory,
   ]);
 
   useEffect(() => {
@@ -246,7 +300,7 @@ const UserProfilePage = () => {
     }
 
     goalCategoryRef.current = formData.goalProfessionCategory;
-  }, [formData.goalProfessionCategory]);
+  }, [formData.goalProfessionCategory, getSubcategoriesByCategory]);
 
   useEffect(() => {
     if (formData.goalProfessionCategory && formData.goalProfessionSubCategory) {
@@ -273,7 +327,9 @@ const UserProfilePage = () => {
   }, [
     formData.goalProfessionCategory,
     formData.goalProfessionSubCategory,
+    formData.goalProfession,
     isCustomGoal,
+    getProfessionsBySubcategory,
   ]);
 
   // const interestSuggestions =
@@ -295,7 +351,7 @@ const UserProfilePage = () => {
     setSuccess("");
 
     try {
-      const payload = {
+      const payload: ProfileUpdatePayload = {
         id: user.id,
         firstName: formData.firstName,
         lastName: formData.lastName,
@@ -317,7 +373,7 @@ const UserProfilePage = () => {
           prioritise: formData.prioritise,
           preferredTags: formData.preferredTags,
         },
-      } as any;
+      };
 
       const { data } = await apiClient.put("/user", payload);
 
@@ -327,7 +383,7 @@ const UserProfilePage = () => {
 
       setSuccess("Profile updated");
       getCurrentUser();
-    } catch (e: any) {
+    } catch (e: unknown) {
       handleRequestError(e, setError, (errs) =>
         setError((Object.values(errs)[0] as string) || "An error occurred"),
       );
@@ -382,7 +438,7 @@ const UserProfilePage = () => {
               </div>
             </div>
 
-            <button className="w-full py-5 bg-red-50 dark:bg-red-500/10 text-red-600 rounded-[2rem] font-black text-xs uppercase tracking-widest border border-red-100 dark:border-red-500/20 hover:bg-red-100 dark:hover:bg-red-500/20 transition-all flex items-center justify-center gap-3">
+            <button className="w-full py-5 bg-red-50 dark:bg-red-500/10 text-red-600 rounded-4xl font-black text-xs uppercase tracking-widest border border-red-100 dark:border-red-500/20 hover:bg-red-100 dark:hover:bg-red-500/20 transition-all flex items-center justify-center gap-3">
               Delete Account Data
             </button>
           </div>
@@ -486,9 +542,14 @@ const UserProfilePage = () => {
                       currentProfessionCategory: e.target.value,
                     }))
                   }
+                  disabled={categoriesLoading}
                   className="w-full p-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 rounded-2xl text-sm font-bold text-slate-900 dark:text-white cursor-pointer"
                 >
-                  <option value="">Select a category...</option>
+                  <option value="">
+                    {categoriesLoading
+                      ? "Loading categories..."
+                      : "Select a category..."}
+                  </option>
                   {categories.map((category) => (
                     <option key={category} value={category}>
                       {category}
@@ -619,9 +680,14 @@ const UserProfilePage = () => {
                       goalProfessionCategory: e.target.value,
                     }))
                   }
+                  disabled={categoriesLoading}
                   className="w-full p-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 rounded-2xl text-sm font-bold text-slate-900 dark:text-white cursor-pointer"
                 >
-                  <option value="">Select a category...</option>
+                  <option value="">
+                    {categoriesLoading
+                      ? "Loading categories..."
+                      : "Select a category..."}
+                  </option>
                   {categories.map((category) => (
                     <option key={category} value={category}>
                       {category}
@@ -779,7 +845,7 @@ const UserProfilePage = () => {
                   type="button"
                   onClick={handleSubmit}
                   disabled={loading}
-                  className={`px-10 py-5 bg-slate-900 dark:bg-white dark:text-slate-900 text-white rounded-[2rem] font-black text-xs uppercase tracking-widest shadow-xl hover:-translate-y-1 transition-all ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
+                  className={`px-10 py-5 bg-slate-900 dark:bg-white dark:text-slate-900 text-white rounded-4xl font-black text-xs uppercase tracking-widest shadow-xl hover:-translate-y-1 transition-all ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
                 >
                   {loading ? "Saving..." : "Update Profile Information"}
                 </button>
