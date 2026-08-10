@@ -15,6 +15,7 @@ import {
   LogOut,
   Menu,
   Banknote,
+  Sparkles,
   X,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
@@ -31,6 +32,7 @@ const AdminLayout = ({ children }: { children: React.ReactNode }) => {
   const navigation = [
     { to: "/", icon: LayoutDashboard, label: "Dashboard" },
     { to: "/courses", icon: BookOpen, label: "Courses" },
+    { to: "/foundation", icon: Sparkles, label: "Foundations" },
     { to: "/classes", icon: Calendar, label: "Classes" },
     { to: "/students", icon: Users, label: "Students" },
     { to: "/companies", icon: Building2, label: "Companies" },

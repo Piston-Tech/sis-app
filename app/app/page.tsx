@@ -29,6 +29,7 @@ import Loading from "./loading";
 import { DashboardData } from "@/types";
 import formatMoney from "@/utils/formatMoney";
 import Course from "@/types/Course";
+import ReferralPanel from "@/components/ReferralPanel";
 
 type RecommendedCourse = Course & {
   popularity: number;
@@ -1254,6 +1255,7 @@ const UserDashboardPage = () => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
         {/* Left Column: Contextual Activity Center */}
         <div className="lg:col-span-8 space-y-8">
+          <ReferralPanel />
           {/* Active Training Module Card */}
           <section className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[2.5rem] p-8 shadow-sm space-y-6">
             <div className="flex justify-between items-start">
@@ -1557,6 +1559,7 @@ const UserDashboardPage = () => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
         {/* Left Column: Recommendation Engine */}
         <div className="lg:col-span-8 space-y-8">
+          <ReferralPanel />
           <section className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[2.5rem] p-8 shadow-sm space-y-6">
             <div className="flex items-start justify-between gap-4">
               <div>

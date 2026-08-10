@@ -6,7 +6,7 @@ export function proxy(request: NextRequest) {
   const url = request.nextUrl;
   const hostname = request.headers.get("host") || "";
 
-  const domain = process.env.DOMAIN_NAME;
+  const domain = process.env.NEXT_PUBLIC_DOMAIN_NAME;
 
   // Define allowed subdomains or ignore specific ones (e.g., www, localhost)
   //   const allowedDomains = [`api.${domain}`,`app.${domain}`, `admin.${domain}`]
