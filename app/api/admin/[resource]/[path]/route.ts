@@ -84,7 +84,7 @@ export async function PUT(
     const body = await request.json();
 
     const { data: resData, response } = await apiServer({
-      url: `/${resource}/${path}`,
+      url: `/admin/${resource}/${path}`,
       method: "PUT",
       body,
       authenticateAs: "admin",

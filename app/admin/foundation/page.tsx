@@ -8,6 +8,8 @@ interface Program {
   title: string;
   description: string;
   duration: string;
+  websiteUrl?: string | null;
+  courseDetails?: string | null;
   isActive: boolean;
   cohorts?: { id: number }[];
 }
@@ -133,6 +135,8 @@ export default function AdminFoundationPage() {
         title: programDraft.title,
         duration: programDraft.duration,
         description: programDraft.description,
+        websiteUrl: programDraft.websiteUrl,
+        courseDetails: programDraft.courseDetails,
       }),
     });
 
@@ -234,9 +238,19 @@ export default function AdminFoundationPage() {
                 placeholder="Duration, e.g. 2 days"
                 className="w-full rounded-lg border border-zinc-300 px-3 py-2.5"
               />
+              <input
+                name="websiteUrl"
+                placeholder="Main website program link"
+                className="w-full rounded-lg border border-zinc-300 px-3 py-2.5"
+              />
               <textarea
                 name="description"
                 placeholder="Short description"
+                className="min-h-28 w-full rounded-lg border border-zinc-300 px-3 py-2.5"
+              />
+              <textarea
+                name="courseDetails"
+                placeholder="Course details: date, mode, time, cost, etc."
                 className="min-h-28 w-full rounded-lg border border-zinc-300 px-3 py-2.5"
               />
               <button className="rounded-lg bg-black px-4 py-2.5 text-sm font-semibold text-white">
@@ -371,7 +385,9 @@ export default function AdminFoundationPage() {
                 <tr>
                   <th className="px-4 py-3">Title</th>
                   <th className="px-4 py-3">Duration</th>
+                  <th className="px-4 py-3">Website</th>
                   <th className="px-4 py-3">Description</th>
+                  <th className="px-4 py-3">Course details</th>
                   <th className="px-4 py-3">Cohorts</th>
                   <th className="px-4 py-3">Status</th>
                   <th className="px-4 py-3">Actions</th>
@@ -418,6 +434,35 @@ export default function AdminFoundationPage() {
                       </td>
                       <td className="px-4 py-3">
                         {isEditing ? (
+                          <input
+                            value={programDraft.websiteUrl ?? ""}
+                            onChange={(event) =>
+                              setProgramDraft((prev) => ({
+                                ...prev,
+                                websiteUrl: event.target.value,
+                              }))
+                            }
+                            className="w-full rounded-md border border-zinc-300 px-2 py-1.5"
+                          />
+                        ) : (
+                          <span className="text-zinc-600">
+                            {program.websiteUrl ? (
+                              <a
+                                href={program.websiteUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-blue-600 underline"
+                              >
+                                Open
+                              </a>
+                            ) : (
+                              "-"
+                            )}
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3">
+                        {isEditing ? (
                           <textarea
                             value={programDraft.description ?? ""}
                             onChange={(event) =>
@@ -431,6 +476,24 @@ export default function AdminFoundationPage() {
                         ) : (
                           <span className="text-zinc-600">
                             {program.description || "-"}
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3">
+                        {isEditing ? (
+                          <textarea
+                            value={programDraft.courseDetails ?? ""}
+                            onChange={(event) =>
+                              setProgramDraft((prev) => ({
+                                ...prev,
+                                courseDetails: event.target.value,
+                              }))
+                            }
+                            className="min-h-20 w-full rounded-md border border-zinc-300 px-2 py-1.5"
+                          />
+                        ) : (
+                          <span className="text-zinc-600">
+                            {program.courseDetails || "-"}
                           </span>
                         )}
                       </td>
@@ -477,6 +540,8 @@ export default function AdminFoundationPage() {
                                     title: program.title,
                                     duration: program.duration,
                                     description: program.description,
+                                    websiteUrl: program.websiteUrl,
+                                    courseDetails: program.courseDetails,
                                   });
                                 }}
                                 className="rounded-md border border-zinc-300 px-3 py-1.5 text-xs font-semibold text-zinc-700"
@@ -498,7 +563,7 @@ export default function AdminFoundationPage() {
                 })}
                 {programs.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="px-4 py-8 text-center text-zinc-500">
+                    <td colSpan={7} className="px-4 py-8 text-center text-zinc-500">
                       No foundation programs created yet.
                     </td>
                   </tr>

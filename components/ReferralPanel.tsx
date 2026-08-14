@@ -20,9 +20,7 @@ const ReferralPanel = () => {
       .catch(() => setSummary(null));
   }, []);
 
-  const applicationLink = typeof window === "undefined"
-    ? "/foundation"
-    : `foundation.${process.env.NEXT_PUBLIC_DOMAIN_NAME}/?ref=${summary?.referralCode ?? ""}`;
+  const applicationLink = `foundation.${process.env.NEXT_PUBLIC_DOMAIN_NAME}/?ref=${summary?.referralCode ?? ""}`;
 
   const copyLink = async () => {
     await navigator.clipboard.writeText(applicationLink);
