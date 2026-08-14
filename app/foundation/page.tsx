@@ -81,7 +81,7 @@ function FoundationApplicationForm() {
       selectedCohort.program.courseDetails,
       selectedCohort.program.description,
       `Date: ${formatDate(selectedCohort.startDate)} to ${formatDate(selectedCohort.endDate)}`,
-      `Time: ${selectedCohort.program.duration || "TBA"}`,
+      `Time: 9AM`,
       selectedCohort.program.websiteUrl ? `Program link: ${selectedCohort.program.websiteUrl}` : "",
     ].filter(Boolean);
     return details.join("\n");
