@@ -17,8 +17,8 @@ const CoursePageLayout = ({ children }: { children: React.ReactNode }) => {
     { title: "Recommendations", href: "recommendations" },
     { title: "Enrollments", href: "enrollments" },
     { title: "Register", href: "register" },
-    { title: "Career Advisor", href: "career-advisor" },
-    { title: "How To", href: "how-to" },
+    // { title: "Career Advisor", href: "career-advisor" },
+    // { title: "How To", href: "how-to" },
   ];
 
   return (

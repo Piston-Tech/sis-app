@@ -1,13 +1,7 @@
 "use client";
 
 import Card from "@/components/Card";
-import {
-  Search,
-  Plus,
-  Calendar,
-  Users,
-  Trash2,
-} from "lucide-react";
+import { Search, Plus, Calendar, Users, Trash2 } from "lucide-react";
 import { AnimatePresence } from "motion/react";
 import { useState } from "react";
 import ClassFormModal from "./ClassFormModal";
@@ -402,7 +396,8 @@ const ClassesList = () => {
                     <div className="flex items-center gap-2 text-xs text-zinc-500">
                       <Calendar size={14} />
                       <span>
-                        {min && min.toLocaleDateString()} - {max && max.toLocaleDateString()}
+                        {min && min.toLocaleDateString()} -{" "}
+                        {max && max.toLocaleDateString()}
                       </span>
                     </div>
                     <div className="flex items-center gap-2 text-xs text-zinc-500">
@@ -461,9 +456,9 @@ const ClassesList = () => {
             <ClassFormModal
               data={selectedClass}
               onClose={() => {
-                setShowAddModal(false);
-                // fetchCourses();
+                setSelectedClass(null);
                 refreshClasses();
+                setShowAddModal(false);
               }}
             />
           )}

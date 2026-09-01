@@ -51,7 +51,7 @@ const apiServer: (
   if (authenticateAs)
     init.headers.Authorization = `Bearer ${authenticateAs === "user" ? accessToken : adminAccessToken}`;
 
-  let response = await fetch(`${backendUrl}${url}`, init);
+  const response = await fetch(`${backendUrl}${url}`, init);
 
   if (response.status === 403 && !url?.includes("/refresh-token")) {
     console.log("403/401 error, attempting to refresh token...");
@@ -73,7 +73,11 @@ const apiServer: (
     }
   }
 
-  const res = await response.json();
+  console.log(response.headers.get("Content-Type"));
+
+  const res = await (response.headers.get("Content-Type")?.includes("application/json")
+    ? response.json()
+    : response.blob());
 
   if (res.accessToken) {
     if (url?.startsWith("/admin")) {

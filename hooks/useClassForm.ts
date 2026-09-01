@@ -129,7 +129,12 @@ const useClassForm = (
     // setFormData((prev) => ({ ...prev, no_students: prev.no_students + 1 }));
   };
 
-  const addClass = async (formData: Partial<Class>) => {
+  const addClass = async (
+    formData: Partial<Class> & {
+      customClass?: CustomClassForm;
+      sessions: SessionForm[];
+    },
+  ) => {
     setLoading(true);
 
     try {
@@ -196,7 +201,11 @@ const useClassForm = (
     if (data) {
       updateClass(data.id, formData);
     } else {
-      addClass(formData);
+      addClass({
+        ...formData,
+        sessions,
+        ...(formData.isCustom ? { customClass: customClassFormData } : {}),
+      });
     }
   };
 

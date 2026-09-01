@@ -49,16 +49,25 @@ export async function GET(
     });
 
     if (response.status === 200) {
-      const { message, success, data } = resData;
+      if (response.headers.get("Content-Type")?.includes("application/json")) {
+        const { message, success, data } = resData;
 
-      return NextResponse.json(
-        { data, message, success },
-        { status: response.status },
-      );
+        return NextResponse.json(
+          { data, message, success },
+          { status: response.status },
+        );
+      }
+
+      // Set standard download headers
+      const headers = new Headers();
+      headers.set("Content-Type", response.headers.get("Content-Type") ?? "");
+
+      return new NextResponse(resData, { status: 200, headers });
     }
 
     return NextResponse.json(resData, { status: response.status });
   } catch (error) {
+    console.log(error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 },
