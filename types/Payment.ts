@@ -9,5 +9,3 @@ export default interface Payment {
   createdAt: Date;
   updatedAt: Date;
 }
-
-

@@ -1,9 +1,33 @@
 // proxy.ts
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { checkCsrf } from "@/lib/api/csrf";
+
+const isApiPath = (pathname: string) =>
+  pathname === "/api" || pathname.startsWith("/api/");
 
 export function proxy(request: NextRequest) {
   const url = request.nextUrl;
+
+  // /api route handlers: CSRF check only. They are served identically on
+  // every host and must never go through the subdomain rewrite below.
+  if (isApiPath(url.pathname)) {
+    const csrf = checkCsrf({
+      method: request.method,
+      pathname: url.pathname,
+      headers: request.headers,
+    });
+
+    if (!csrf.ok) {
+      return NextResponse.json(
+        { success: false, error: csrf.error },
+        { status: csrf.status },
+      );
+    }
+
+    return NextResponse.next();
+  }
+
   const hostname = request.headers.get("host") || "";
 
   const domain = process.env.NEXT_PUBLIC_DOMAIN_NAME;
@@ -74,6 +98,8 @@ export function proxy(request: NextRequest) {
 // Optionally, use a matcher to restrict when the proxy runs
 export const config = {
   matcher: [
+    // /api runs only the CSRF check at the top of proxy() (never rewritten)
+    "/api/:path*",
     "/((?!api|_next/static|_next/image|favicon.ico|.*\\..*).*)",
     "/admin/:path*",
     "/app/:path*",

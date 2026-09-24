@@ -1,32 +1,13 @@
-import axios, { AxiosInstance } from 'axios';
+import axios, { AxiosInstance } from "axios";
 
+// Browser → same-origin Next.js route handlers (app/api/**). Auth is carried
+// by httpOnly cookies; the handlers talk to the backend via apiServer.
 const apiClient: AxiosInstance = axios.create({
-    baseURL: process.env.REACT_APP_API_BASE_URL || '/api',
-    timeout: 10000,
-    headers: {
-        'Content-Type': 'application/json',
-    },
+  baseURL: "/api",
+  timeout: 10000,
+  headers: {
+    "Content-Type": "application/json",
+  },
 });
-
-// Add request interceptor for auth token
-// apiClient.interceptors.request.use((config) => {
-//     const token = localStorage.getItem('authToken');
-//     if (token) {
-//         config.headers.Authorization = `Bearer ${token}`;
-//     }
-//     return config;
-// });
-
-// Add response interceptor for error handling
-// apiClient.interceptors.response.use(
-//     (response) => response,
-//     (error) => {
-//         if (error.response?.status === 401) {
-//             localStorage.removeItem('authToken');
-//             window.location.href = '/login';
-//         }
-//         return Promise.reject(error);
-//     }
-// );
 
 export default apiClient;

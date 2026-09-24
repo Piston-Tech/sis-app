@@ -24,15 +24,8 @@ export const getCategories = (): string[] => {
 
 // Get subcategories for a selected category
 export const getSubcategoriesByCategory = (categoryName: string): string[] => {
-  console.log("🔍 Looking for category:", categoryName);
-  console.log("📊 Available categories:", tree.categories.map((c) => c.name));
   const category = tree.categories.find((cat) => cat.name === categoryName);
-  console.log("✅ Found category:", category);
-  const result = category
-    ? category.subcategories.map((sub) => sub.name)
-    : [];
-  console.log("📋 Subcategories:", result);
-  return result;
+  return category ? category.subcategories.map((sub) => sub.name) : [];
 };
 
 // Get professions for a selected subcategory

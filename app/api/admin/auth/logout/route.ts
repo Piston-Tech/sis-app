@@ -1,19 +1,12 @@
+import { withErrorHandling } from "@/lib/api/respond";
 import { logoutAdmin } from "@/services/apiServer";
-import { deleteCookie } from "@/utils/cookies";
-import { cookies } from "next/headers";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 
-export async function POST(request: NextRequest) {
-  try {
-    await logoutAdmin();
-    return NextResponse.json(
-      { success: true, message: "Loggout Successful" },
-      { status: 200 },
-    );
-  } catch (error) {
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
-  }
-}
+export const POST = withErrorHandling("admin/auth/logout", async () => {
+  await logoutAdmin();
+
+  return NextResponse.json(
+    { message: "Logged out successfully", success: true },
+    { status: 200 },
+  );
+});

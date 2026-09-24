@@ -1,6 +1,4 @@
-import {
-  UserDetails,
-} from ".";
+import { UserDetails } from ".";
 
 interface GlobalState {
   // products: Product[];

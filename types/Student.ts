@@ -22,7 +22,6 @@ export default interface Student {
   middleName: string;
   lastName: string;
   email: string;
-  passwordHash: string;
   phone: string;
   companyId?: number;
   membershipTier: MembershipTier | string;

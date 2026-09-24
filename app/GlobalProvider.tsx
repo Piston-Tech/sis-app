@@ -1,22 +1,14 @@
 "use client";
 
 import apiClient from "@/services/apiClient";
-import authService from "@/services/authService";
-import {
-  AuthResponse,
-  GlobalState,
-  LoginCredentials,
-  SignupCredentials,
-  Student,
-  UserDetails,
-} from "@/types";
-import LoginAuthResponse from "@/types/LoginAuthResponse";
+import { GlobalState, UserDetails } from "@/types";
 import {
   createContext,
   ReactNode,
-  SetStateAction,
+  useCallback,
   useContext,
   useEffect,
+  useMemo,
   useState,
 } from "react";
 
@@ -31,40 +23,37 @@ export const GlobalProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<UserDetails | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    console.log("Fetching current user...");
-    getCurrentUser();
-  }, []);
-
-  const getCurrentUser: () => Promise<void> = async () => {
+  const getCurrentUser = useCallback(async () => {
     try {
       const { data } = await apiClient.get("/user");
-
-      if (data?.user) {
-        setUser(data.user);
-      }
-    } catch (error) {
+      setUser(data?.user ?? null);
+    } catch {
       setUser(null);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const removeUser = () => {
+  const removeUser = useCallback(() => {
     setUser(null);
-  };
+  }, []);
+
+  useEffect(() => {
+    getCurrentUser();
+  }, [getCurrentUser]);
+
+  const value = useMemo<GlobalState>(
+    () => ({
+      currentUser: user,
+      getCurrentUser,
+      removeUser,
+      loading,
+    }),
+    [user, getCurrentUser, removeUser, loading],
+  );
 
   return (
-    <GlobalContext.Provider
-      value={{
-        currentUser: user,
-        getCurrentUser,
-        removeUser,
-        loading,
-      }}
-    >
-      {children}
-    </GlobalContext.Provider>
+    <GlobalContext.Provider value={value}>{children}</GlobalContext.Provider>
   );
 };
 
