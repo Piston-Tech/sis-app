@@ -39,6 +39,12 @@ export const GlobalProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   useEffect(() => {
+    // The admin portal has its own session (AdminProvider); asking for the
+    // student profile there only ever returns 401
+    if (window.location.hostname.startsWith("admin.")) {
+      setLoading(false);
+      return;
+    }
     getCurrentUser();
   }, [getCurrentUser]);
 

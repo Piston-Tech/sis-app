@@ -22,7 +22,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} antialiased`}>
+      {/* Browser extensions (e.g. Grammarly) add attributes to <body> before
+          React hydrates; don't report those as hydration errors */}
+      <body className={`${inter.variable} antialiased`} suppressHydrationWarning>
         <GoogleOAuthProvider
           clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ?? ""}
         >
