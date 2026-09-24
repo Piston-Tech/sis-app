@@ -3,16 +3,12 @@ const handleRequestError = (
   setError: (error: string) => void,
   setErrors: (errors: any) => void,
 ) => {
-  const {
-    response: {
-      data: { errors, error },
-    },
-  } = e;
+  const { errors, error } = e?.response?.data ?? {};
 
   if (errors) {
     setErrors(errors);
-  } else if (error) {
-    setError(error);
+  } else {
+    setError(error || e?.message || "Network error");
   }
 };
 

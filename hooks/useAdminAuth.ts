@@ -26,8 +26,6 @@ export function useAdminAuth() {
     try {
       const { data } = await apiClient.post("/admin/auth/login", credentials);
 
-      console.log("Client: ", data);
-
       if (data.success) {
         finalizeLogin(data.user);
         router.push("/");
@@ -39,18 +37,12 @@ export function useAdminAuth() {
         }
       }
     } catch (e: any) {
-      const {
-        response: {
-          data: { errors, error },
-        },
-      } = e;
-
-      console.log(error, errors);
+      const { errors, error } = e?.response?.data ?? {};
 
       if (errors) {
         setErrors(errors);
-      } else if (error) {
-        alert(error);
+      } else {
+        alert(error || e?.message || "Network error");
       }
     }
     // if (response.data.token) {
@@ -76,7 +68,7 @@ export function useAdminAuth() {
   };
 
   const getCurrentUser = async (): Promise<AdminLoginAuthResponse> => {
-    const response = await apiClient.get("/auth/me");
+    const response = await apiClient.get("/admin");
     return response.data;
     // try {
     // } catch {

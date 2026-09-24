@@ -1,5 +1,5 @@
 import { deleteCookie, getCookie, setCookie } from "@/utils/cookies";
-import { cookies } from "next/headers";
+import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 
 const backendUrl = process.env.BACKEND_URL;
@@ -25,20 +25,35 @@ interface ServerRequestInit extends RequestInit {
   headers: Record<string, string>;
 }
 
-const apiServer: (
-  props: ServerRequestProps,
-) => Promise<ServerResponse> = async ({
-  url,
-  method = "GET",
-  body,
-  authenticateAs = "user",
-}: ServerRequestProps) => {
-  if (!backendUrl) {
-    NextResponse.json({ error: "Backend URL not configured" }, { status: 500 });
-  }
+// In-flight refresh calls keyed by the refresh token being exchanged, so
+// parallel requests holding the same token share a single refresh call.
+// Resolves to the rotated tokens, null if the backend rejected the refresh
+// token, or undefined on a network/unexpected error.
+type RefreshResult = { accessToken: string; refreshToken?: string } | null;
+const refreshesInFlight = new Map<string, Promise<RefreshResult | undefined>>();
 
-  const accessToken = await getUserAccessToken();
-  const adminAccessToken = await getAdminAccessToken();
+const NO_REFRESH_URLS = ["/refresh-token", "/auth/login", "/auth/logout"];
+
+const getClientIp = async (): Promise<string | undefined> => {
+  try {
+    const incoming = await headers();
+    const forwardedFor = incoming.get("x-forwarded-for")?.split(",")[0]?.trim();
+    return forwardedFor || incoming.get("x-real-ip")?.trim() || undefined;
+  } catch {
+    // Called outside of a request scope
+    return undefined;
+  }
+};
+
+const sendRequest = async (
+  { url, method = "GET", body, authenticateAs = "user" }: ServerRequestProps,
+  retried: boolean,
+  accessTokenOverride?: string,
+): Promise<ServerResponse> => {
+  if (!backendUrl) {
+    const data = { error: "Backend URL not configured", success: false };
+    return { data, response: NextResponse.json(data, { status: 500 }) };
+  }
 
   const init: ServerRequestInit = {
     method,
@@ -48,32 +63,37 @@ const apiServer: (
   };
 
   if (body) init.body = JSON.stringify(body);
-  if (authenticateAs)
-    init.headers.Authorization = `Bearer ${authenticateAs === "user" ? accessToken : adminAccessToken}`;
+
+  const token =
+    accessTokenOverride ??
+    (authenticateAs === "user"
+      ? await getUserAccessToken()
+      : authenticateAs === "admin"
+        ? await getAdminAccessToken()
+        : undefined);
+  if (token) init.headers.Authorization = `Bearer ${token}`;
+
+  const clientIp = await getClientIp();
+  if (clientIp) init.headers["X-Forwarded-For"] = clientIp;
 
   const response = await fetch(`${backendUrl}${url}`, init);
 
-  if (response.status === 403 && !url?.includes("/refresh-token")) {
-    console.log("403/401 error, attempting to refresh token...");
-    const refreshSuccess = await (authenticateAs === "user"
-      ? reAuthenticate()
-      : reAuthenticateAdmin());
-    // response = await (authenticateAs === "user"
-    //   ? reAuthenticate(sendRequest)
-    //   : reAuthenticateAdmin(sendRequest));
-    if (refreshSuccess) {
-      return await apiServer({
-        url,
-        method,
-        body,
-        authenticateAs,
-      });
-    } else {
-      console.error("Refresh token failed. User needs to re-authenticate.");
+  if (
+    (response.status === 401 || response.status === 403) &&
+    authenticateAs &&
+    !retried &&
+    !NO_REFRESH_URLS.some((path) => url?.includes(path))
+  ) {
+    const newAccessToken = await refreshAccessToken(authenticateAs);
+
+    if (newAccessToken) {
+      return await sendRequest(
+        { url, method, body, authenticateAs },
+        true,
+        newAccessToken,
+      );
     }
   }
-
-  console.log(response.headers.get("Content-Type"));
 
   const res = await (response.headers.get("Content-Type")?.includes("application/json")
     ? response.json()
@@ -104,60 +124,85 @@ const apiServer: (
   }
 
   return { data: res, response };
-  // } catch (error) {
-  //   console.log(error);
-
-  //   NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  //   throw error;
-  // }
 };
 
-export const reAuthenticate: () => Promise<boolean> = async () => {
-  const refreshToken = await getUserRefreshToken();
+const apiServer: (props: ServerRequestProps) => Promise<ServerResponse> = (
+  props,
+) => sendRequest(props, false);
 
-  try {
-    const {
-      data: { success },
-    } = await apiServer({
-      url: "/auth/refresh-token",
-      method: "POST",
-      body: { refreshToken },
-    });
+const refreshTokens = (
+  url: string,
+  refreshToken: string,
+): Promise<RefreshResult | undefined> => {
+  const key = `${url}:${refreshToken}`;
+  const inFlight = refreshesInFlight.get(key);
+  if (inFlight) return inFlight;
 
-    if (!success) {
-      logoutUser();
-      return false;
+  const promise = (async () => {
+    try {
+      const { data, response } = await sendRequest(
+        {
+          url,
+          method: "POST",
+          body: { refreshToken },
+          authenticateAs: null,
+        },
+        true,
+      );
+
+      if (response.ok && data?.accessToken) {
+        return { accessToken: data.accessToken, refreshToken: data.refreshToken };
+      }
+
+      return response.status === 401 || response.status === 403 ? null : undefined;
+    } catch {
+      return undefined;
     }
+  })().finally(() => refreshesInFlight.delete(key));
 
-    return true;
-  } catch (error) {
-    return false;
-  }
+  refreshesInFlight.set(key, promise);
+  return promise;
 };
 
-export const reAuthenticateAdmin: () => Promise<boolean> = async () => {
-  const refreshToken = await getAdminRefreshToken();
+// Exchanges the stored refresh token for new tokens and stores them in this
+// request's cookies (the shared refresh may have run in a different request).
+// Returns the new access token, or undefined if the refresh failed.
+const refreshAccessToken = async (
+  authenticateAs: "admin" | "user",
+): Promise<string | undefined> => {
+  const isAdmin = authenticateAs === "admin";
+  const refreshToken = await (isAdmin
+    ? getAdminRefreshToken()
+    : getUserRefreshToken());
+  if (!refreshToken) return undefined;
 
-  try {
-    const { data } = await apiServer({
-      url: "/admin/auth/refresh-token",
-      method: "POST",
-      body: { refreshToken },
-    });
+  const tokens = await refreshTokens(
+    isAdmin ? "/admin/auth/refresh-token" : "/auth/refresh-token",
+    refreshToken,
+  );
 
-    console.log(data);
-
-    if (!data.success) {
-      logoutAdmin();
-      return false;
-    }
-
-    return true;
-  } catch (error) {
-    console.log(error);
-    return false;
+  if (tokens === null) {
+    await (isAdmin ? logoutAdmin() : logoutUser());
+    return undefined;
   }
+  if (!tokens) return undefined;
+
+  if (isAdmin) {
+    await setAdminAccessToken(tokens.accessToken);
+    if (tokens.refreshToken) await setAdminRefreshToken(tokens.refreshToken);
+  } else {
+    await setUserAccessToken(tokens.accessToken);
+    if (tokens.refreshToken) await setUserRefreshToken(tokens.refreshToken);
+  }
+
+  return tokens.accessToken;
 };
+
+export const reAuthenticate: () => Promise<boolean> = async () =>
+  !!(await refreshAccessToken("user"));
+
+export const reAuthenticateAdmin: () => Promise<boolean> = async () =>
+  !!(await refreshAccessToken("admin"));
 
 export const setUserAccessToken = async (value: any) =>
   setCookie("accessToken", value, 15);
@@ -193,13 +238,29 @@ export const getAdminDetails: () => Promise<any> = async () =>
   JSON.parse((await getCookie("adminDetails")) || "null");
 export const deleteAdminDetails = async () => deleteCookie("adminDetails");
 
+const revokeRefreshToken = async (url: string, refreshToken?: string) => {
+  if (!refreshToken) return;
+  try {
+    await apiServer({
+      url,
+      method: "POST",
+      body: { refreshToken },
+      authenticateAs: null,
+    });
+  } catch {
+    // Best-effort: local cookies are cleared regardless
+  }
+};
+
 export const logoutAdmin = async () => {
+  await revokeRefreshToken("/admin/auth/logout", await getAdminRefreshToken());
   await deleteAdminAccessToken();
   await deleteAdminRefreshToken();
   await deleteAdminDetails();
 };
 
 export const logoutUser = async () => {
+  await revokeRefreshToken("/auth/logout", await getUserRefreshToken());
   await deleteUserAccessToken();
   await deleteUserRefreshToken();
   await deleteUserDetails();

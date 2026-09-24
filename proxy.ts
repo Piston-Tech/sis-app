@@ -13,10 +13,32 @@ export function proxy(request: NextRequest) {
   const allowedDomains: string[] = [];
   const currentHost = hostname.replace(`.${domain}`, "");
 
-  console.log(domain);
-  console.log(currentHost);
+  if (
+    allowedDomains.includes(hostname) ||
+    currentHost === "www" ||
+    hostname === domain
+  ) {
+    // The subdomain folders must never be served directly on www / the bare
+    // domain (that would skip the session checks below): send them to their
+    // own subdomain instead.
+    const [first = "", ...rest] = url.pathname.split("/").filter(Boolean);
+    let section: string;
+    try {
+      section = decodeURIComponent(first).toLowerCase();
+    } catch {
+      return new NextResponse(null, { status: 404 });
+    }
+    if (section === "admin" || section === "app") {
+      if (!domain) return new NextResponse(null, { status: 404 });
 
-  if (allowedDomains.includes(hostname) || currentHost === "www") {
+      const protocol =
+        request.headers.get("x-forwarded-proto")?.split(",")[0] ||
+        url.protocol.replace(":", "");
+      return NextResponse.redirect(
+        `${protocol}://${section}.${domain}/${rest.join("/")}${url.search}`,
+      );
+    }
+
     return NextResponse.next();
   } else {
     const session = request.cookies.get("refreshToken")?.value;
@@ -54,6 +76,7 @@ export const config = {
   matcher: [
     "/((?!api|_next/static|_next/image|favicon.ico|.*\\..*).*)",
     "/admin/:path*",
+    "/app/:path*",
     "/profile/:path*",
   ],
 };

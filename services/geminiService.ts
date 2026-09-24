@@ -1,6 +1,8 @@
+// Server-only module: it reads GEMINI_API_KEY, which must never reach the
+// browser. Only import this from route handlers / server code.
 import { GoogleGenAI, Type } from "@google/genai";
 
-const ai = new GoogleGenAI({ apiKey: process.env.NEXT_PUBLIC_API_KEY });
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 export const getPersonalizedRecommendation = async (surveyData: any) => {
   try {
