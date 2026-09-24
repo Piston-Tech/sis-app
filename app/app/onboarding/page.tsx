@@ -1,1055 +1,446 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { UserRole, MembershipTier } from "@/types";
-import apiClient from "@/services/apiClient";
-import { useGlobal } from "@/app/GlobalProvider";
-import handleRequestError from "@/utils/handleRequestError";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useGlobal } from "@/app/GlobalProvider";
 import Loading from "@/app/app/loading";
-import { ErrorMsg } from "@/components/Form";
 import useProfessionCategories from "@/hooks/useProfessionCategories";
+import { getInterestsBySubcategory } from "@/utils/recommendationTreeUtils";
 import {
-  getInterestsBySubcategory,
-} from "@/utils/recommendationTreeUtils";
+  getPersonaLabel,
+  getProficiencyLabel,
+  PERSONAS,
+  PRIORITISE_OPTIONS,
+  PrioritiseOption,
+} from "@/constants/profile";
+import { SelectField, TextField } from "@/components/student/FormControls";
+import ProfessionFields, { ProfessionErrors } from "@/components/student/profile/ProfessionFields";
+import { useUpdateProfile } from "@/components/student/queries";
+import { getErrorMessage } from "@/components/student/errors";
+import type { UserDetails } from "@/types";
+import type { StudentProfessionDetails } from "@/types/Student";
 
-interface ProfessionDetails {
-  category?: string;
-  subCategory?: string;
-  profession?: string;
-  level?: number;
-}
+const TOTAL_STEPS = 5;
 
-interface FormDataType {
-  // Profile fields
-  prefix: string;
-  firstName: string;
-  middleName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-  
-  // Career info
-  careerStage: string;
-  primaryGoal: string;
-  
-  // Persona & membership
-  persona: string;
-  membershipTier: string;
-  
-  // Metadata
-  currentProfession: ProfessionDetails;
-  goalProfession: ProfessionDetails;
-  prioritise: "Goal Profession" | "Current Profession" | "Both";
-  preferredTags: string[];
-}
+const choiceClass = (selected: boolean) =>
+  `flex w-full cursor-pointer items-center gap-3 rounded-lg border p-4 text-left transition-all has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-blue-500 ${
+    selected
+      ? "border-blue-600 bg-blue-50 text-blue-800"
+      : "border-slate-200 text-slate-800 hover:border-blue-300 hover:bg-slate-50"
+  }`;
 
-const OnboardingPage = () => {
-  const { currentUser, getCurrentUser } = useGlobal();
+const professionErrors = (value: StudentProfessionDetails): ProfessionErrors => {
+  const errors: ProfessionErrors = {};
+  if (!value.category) errors.category = "Choose a category";
+  if (!value.subCategory) errors.subCategory = "Choose a sub-category";
+  if (!value.profession?.trim()) errors.profession = "Choose or type a profession";
+  if (!value.level) errors.level = "Choose a level";
+  return errors;
+};
+
+const OnboardingForm = ({ user }: { user: UserDetails }) => {
   const router = useRouter();
+  const categories = useProfessionCategories();
+  const updateProfile = useUpdateProfile();
 
   const [step, setStep] = useState(1);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [prefix, setPrefix] = useState(user.prefix ?? "");
+  const [firstName, setFirstName] = useState(user.firstName ?? "");
+  const [middleName, setMiddleName] = useState(user.middleName ?? "");
+  const [lastName, setLastName] = useState(user.lastName ?? "");
+  const [phone, setPhone] = useState(user.phone ?? "");
+  const [persona, setPersona] = useState("");
+  const [current, setCurrent] = useState<StudentProfessionDetails>({});
+  const [goal, setGoal] = useState<StudentProfessionDetails>({});
+  const [prioritise, setPrioritise] = useState<PrioritiseOption>("Both");
+  const [preferredTags, setPreferredTags] = useState<string[]>([]);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [currentErrors, setCurrentErrors] = useState<ProfessionErrors>({});
+  const [goalErrors, setGoalErrors] = useState<ProfessionErrors>({});
 
-  const {
-    categories,
-    loading: categoriesLoading,
-    error: categoriesError,
-    getSubcategoriesByCategory,
-    getProfessionsBySubcategory,
-  } = useProfessionCategories();
+  const suggestedTags = useMemo(() => {
+    const tags = [
+      ...(current.category && current.subCategory
+        ? getInterestsBySubcategory(current.category, current.subCategory)
+        : []),
+      ...(goal.category && goal.subCategory
+        ? getInterestsBySubcategory(goal.category, goal.subCategory)
+        : []),
+    ];
+    return Array.from(new Set(tags));
+  }, [current.category, current.subCategory, goal.category, goal.subCategory]);
 
-  const [currentSubcategories, setCurrentSubcategories] = useState<string[]>([]);
-  const [currentProfessions, setCurrentProfessions] = useState<string[]>([]);
-  const [currentInterests, setCurrentInterests] = useState<string[]>([]);
-  
-  const [goalSubcategories, setGoalSubcategories] = useState<string[]>([]);
-  const [goalProfessions, setGoalProfessions] = useState<string[]>([]);
-  const [goalInterests, setGoalInterests] = useState<string[]>([]);
-  const [isCustomCurrent, setIsCustomCurrent] = useState(false);
-  const [isCustomGoal, setIsCustomGoal] = useState(false);
-
-  const [formData, setFormData] = useState<FormDataType>({
-    prefix: "",
-    firstName: "",
-    middleName: "",
-    lastName: "",
-    email: "",
-    phone: "",
-    careerStage: "",
-    primaryGoal: "",
-    persona: "",
-    membershipTier: MembershipTier.BASIC,
-    currentProfession: {},
-    goalProfession: {},
-    prioritise: "Both",
-    preferredTags: [],
-  });
-
-  useEffect(() => {
-    if (!currentUser) return;
-    if (currentUser.persona) {
-      router.replace("/");
-    } else if (currentUser.email) {
-      setFormData((prev) => ({
-        ...prev,
-        email: currentUser.email || "",
-        firstName: currentUser.firstName || "",
-        lastName: currentUser.lastName || "",
-      }));
-    }
-  }, [currentUser, router]);
-
-  useEffect(() => {
-    if (!categoriesError) return;
-    setError(categoriesError);
-  }, [categoriesError]);
-
-  const careerStageOptions = [
-    "Student/Fresh Grad",
-    "Working Professional",
-    "SME Owner",
-    "HR/Corporate Manager",
-  ];
-
-  const primaryGoalOptions = [
-    "Land my first job",
-    "Get a promotion",
-    "Scale my business",
-    "Train my team",
-  ];
-
-  const levelOptions = [
-    { label: "Beginner", value: 1 },
-    { label: "Intermediate", value: 2 },
-    { label: "Advanced", value: 3 },
-  ];
-
-  const determinPersona = (stage: string): string => {
-    if (stage === "Student/Fresh Grad") return UserRole.JOB_SEEKER;
-    if (stage === "SME Owner") return UserRole.SME_OWNER;
-    if (stage === "HR/Corporate Manager") return UserRole.CORPORATE_ADMIN;
-    return UserRole.PROFESSIONAL;
-  };
-
-  const handleCurrentCategoryChange = (category: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      currentProfession: { category },
-    }));
-    const subs = getSubcategoriesByCategory(category);
-    setCurrentSubcategories(subs);
-    setCurrentProfessions([]);
-    setCurrentInterests([]);
-    setIsCustomCurrent(false);
-  };
-
-  const handleCurrentSubcategoryChange = (subcategory: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      currentProfession: { ...prev.currentProfession, subCategory: subcategory },
-    }));
-    const profs = getProfessionsBySubcategory(
-      formData.currentProfession.category || "",
-      subcategory
-    );
-    const interests = getInterestsBySubcategory(
-      formData.currentProfession.category || "",
-      subcategory
-    );
-    setCurrentProfessions(profs);
-    setCurrentInterests(interests);
-    setIsCustomCurrent(false);
-  };
-
-  const handleGoalCategoryChange = (category: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      goalProfession: { category },
-    }));
-    const subs = getSubcategoriesByCategory(category);
-    setGoalSubcategories(subs);
-    setGoalProfessions([]);
-    setGoalInterests([]);
-    setIsCustomGoal(false);
-  };
-
-  const handleGoalSubcategoryChange = (subcategory: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      goalProfession: { ...prev.goalProfession, subCategory: subcategory },
-    }));
-    const profs = getProfessionsBySubcategory(
-      formData.goalProfession.category || "",
-      subcategory
-    );
-    const interests = getInterestsBySubcategory(
-      formData.goalProfession.category || "",
-      subcategory
-    );
-    setGoalProfessions(profs);
-    setGoalInterests(interests);
-    setIsCustomGoal(false);
-  };
-
-  const toggleTag = (tag: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      preferredTags: prev.preferredTags.includes(tag)
-        ? prev.preferredTags.filter((t) => t !== tag)
-        : [...prev.preferredTags, tag],
-    }));
-  };
-
-  const validateStep = (currentStep: number): boolean => {
-    const errors: Record<string, string> = {};
-
+  const validateStep = (currentStep: number) => {
     if (currentStep === 1) {
-      if (!formData.firstName.trim()) errors.firstName = "First name is required";
-      if (!formData.lastName.trim()) errors.lastName = "Last name is required";
-      if (!formData.email.trim()) errors.email = "Email is required";
-      if (!formData.phone.trim()) errors.phone = "Phone is required";
-    } else if (currentStep === 2) {
-      if (!formData.careerStage) errors.careerStage = "Career stage is required";
-      if (!formData.primaryGoal) errors.primaryGoal = "Primary goal is required";
-    } else if (currentStep === 3) {
-      if (!formData.currentProfession.category)
-        errors.currentCategory = "Current category is required";
-      if (!formData.currentProfession.subCategory)
-        errors.currentSubCategory = "Current sub-category is required";
-      if (!formData.currentProfession.profession)
-        errors.currentProfession = "Current profession is required";
-      if (!formData.currentProfession.level)
-        errors.currentLevel = "Current level is required";
-    } else if (currentStep === 4) {
-      if (!formData.goalProfession.category)
-        errors.goalCategory = "Goal category is required";
-      if (!formData.goalProfession.subCategory)
-        errors.goalSubCategory = "Goal sub-category is required";
-      if (!formData.goalProfession.profession)
-        errors.goalProfession = "Goal profession is required";
-      if (!formData.goalProfession.level)
-        errors.goalLevel = "Goal level is required";
+      const next: Record<string, string> = {};
+      if (!firstName.trim()) next.firstName = "First name is required";
+      if (!lastName.trim()) next.lastName = "Last name is required";
+      if (!phone.trim()) next.phone = "Phone number is required";
+      setErrors(next);
+      return Object.keys(next).length === 0;
     }
-
-    setFormErrors(errors);
-    return Object.keys(errors).length === 0;
+    if (currentStep === 2) {
+      const next: Record<string, string> = persona
+        ? {}
+        : { persona: "Choose the option that describes you best" };
+      setErrors(next);
+      return Object.keys(next).length === 0;
+    }
+    if (currentStep === 3) {
+      const next = professionErrors(current);
+      setCurrentErrors(next);
+      return Object.keys(next).length === 0;
+    }
+    if (currentStep === 4) {
+      const next = professionErrors(goal);
+      setGoalErrors(next);
+      return Object.keys(next).length === 0;
+    }
+    return true;
   };
 
-  const handleNext = () => {
-    if (validateStep(step)) {
-      if (step === 2) {
-        setFormData((prev) => ({
-          ...prev,
-          persona: determinPersona(formData.careerStage),
-        }));
-      }
-      setStep(step + 1);
-    }
-  };
-
-  const handlePrevious = () => {
-    setStep(Math.max(1, step - 1));
+  const next = () => {
+    if (validateStep(step)) setStep((value) => Math.min(TOTAL_STEPS, value + 1));
   };
 
   const finalize = async () => {
-    if (!validateStep(5)) return;
-
-    setLoading(true);
+    for (let s = 1; s < TOTAL_STEPS; s++) {
+      if (!validateStep(s)) {
+        setStep(s);
+        return;
+      }
+    }
     try {
-      if (!currentUser) return;
-
-      const { data } = await apiClient.put("/user", {
-        id: currentUser.id,
-        prefix: formData.prefix,
-        firstName: formData.firstName,
-        middleName: formData.middleName,
-        lastName: formData.lastName,
-        email: formData.email,
-        phone: formData.phone,
-        membershipTier: formData.membershipTier,
-        persona: formData.persona,
+      // Email and membership tier are managed by the academy, never sent.
+      await updateProfile.mutateAsync({
+        prefix,
+        firstName: firstName.trim(),
+        middleName: middleName.trim(),
+        lastName: lastName.trim(),
+        phone: phone.trim(),
+        persona,
         metaData: {
-          currentProfession: formData.currentProfession,
-          goalProfession: formData.goalProfession,
-          prioritise: formData.prioritise,
-          preferredTags: formData.preferredTags,
+          currentProfession: current,
+          goalProfession: goal,
+          prioritise,
+          preferredTags,
         },
       });
-
-      if (!data.success) {
-        throw new Error(data.error || "Failed to save profile");
-      }
-
-      getCurrentUser();
+      // useUpdateProfile has already refreshed the current user (with persona).
       router.replace("/");
-    } catch (e: unknown) {
-      handleRequestError(e, setError, (errors) =>
-        setError((Object.values(errors)[0] as string) || "An error occurred")
-      );
-    } finally {
-      setLoading(false);
+    } catch {
+      // Shown below via updateProfile.error.
     }
   };
 
-  if (!currentUser) {
-    return <Loading />;
-  }
-
-  if (currentUser.persona) {
-    return <Loading />;
-  }
-
-  const totalSteps = 5;
-
   return (
-    <div className="min-h-screen bg-slate-50 py-12 px-4">
-      <div className="max-w-3xl mx-auto mt-8 p-8 bg-white rounded-2xl shadow-xl border border-slate-100">
-        {/* Progress bar */}
-        <div className="flex justify-between mb-8">
-          {Array.from({ length: totalSteps }).map((_, i) => (
+    <main className="min-h-screen bg-slate-50 px-4 py-12">
+      <div className="mx-auto mt-8 max-w-3xl rounded-2xl border border-slate-100 bg-white p-6 shadow-xl sm:p-8">
+        <div
+          className="mb-8 flex justify-between"
+          role="progressbar"
+          aria-label="Onboarding progress"
+          aria-valuemin={1}
+          aria-valuemax={TOTAL_STEPS}
+          aria-valuenow={step}
+          aria-valuetext={`Step ${step} of ${TOTAL_STEPS}`}
+        >
+          {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
             <div
-              key={i + 1}
-              className={`h-2 flex-1 mx-1 rounded-full ${
-                step >= i + 1 ? "bg-blue-600" : "bg-slate-200"
-              }`}
+              key={i}
+              className={`mx-1 h-2 flex-1 rounded-full ${step >= i + 1 ? "bg-blue-600" : "bg-slate-200"}`}
             />
           ))}
         </div>
 
-        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-          {/* Step 1: Profile Information */}
-          {step === 1 && (
-            <div>
-              <h2 className="text-2xl font-bold mb-2 text-slate-800">
-                Your Profile
-              </h2>
-              <p className="text-slate-600 mb-6">
-                Let&apos;s start with your basic information
-              </p>
+        <p className="mb-1 text-sm font-semibold text-slate-600">
+          Step {step} of {TOTAL_STEPS}
+        </p>
 
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">
-                      Prefix
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="Mr., Ms., Dr., etc."
-                      value={formData.prefix}
-                      onChange={(e) =>
-                        setFormData({ ...formData, prefix: e.target.value })
-                      }
-                      className="w-full p-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">
-                      First Name *
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="First name"
-                      value={formData.firstName}
-                      onChange={(e) =>
-                        setFormData({ ...formData, firstName: e.target.value })
-                      }
-                      className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 ${
-                        formErrors.firstName
-                          ? "border-red-500 focus:ring-red-500"
-                          : "border-slate-300 focus:ring-blue-500"
-                      }`}
-                    />
-                    {formErrors.firstName && (
-                      <p className="text-red-500 text-xs mt-1">
-                        {formErrors.firstName}
-                      </p>
-                    )}
-                  </div>
-                </div>
+        {step === 1 && (
+          <section aria-labelledby="step-heading">
+            <h1 id="step-heading" className="mb-2 text-2xl font-bold text-slate-800">
+              Your profile
+            </h1>
+            <p className="mb-6 text-slate-600">Let&apos;s start with your basic information.</p>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">
-                      Middle Name
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="Middle name"
-                      value={formData.middleName}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          middleName: e.target.value,
-                        })
-                      }
-                      className="w-full p-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">
-                      Last Name *
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="Last name"
-                      value={formData.lastName}
-                      onChange={(e) =>
-                        setFormData({ ...formData, lastName: e.target.value })
-                      }
-                      className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 ${
-                        formErrors.lastName
-                          ? "border-red-500 focus:ring-red-500"
-                          : "border-slate-300 focus:ring-blue-500"
-                      }`}
-                    />
-                    {formErrors.lastName && (
-                      <p className="text-red-500 text-xs mt-1">
-                        {formErrors.lastName}
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">
-                    Email *
-                  </label>
-                  <input
-                    type="email"
-                    placeholder="your.email@example.com"
-                    value={formData.email}
-                    disabled
-                    className="w-full p-3 border border-slate-300 rounded-lg bg-slate-100 focus:outline-none"
-                  />
-                  <p className="text-xs text-slate-500 mt-1">
-                    This is your registered email
-                  </p>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">
-                    Phone *
-                  </label>
-                  <input
-                    type="tel"
-                    placeholder="+1 (555) 123-4567"
-                    value={formData.phone}
-                    onChange={(e) =>
-                      setFormData({ ...formData, phone: e.target.value })
-                    }
-                    className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 ${
-                      formErrors.phone
-                        ? "border-red-500 focus:ring-red-500"
-                        : "border-slate-300 focus:ring-blue-500"
-                    }`}
-                  />
-                  {formErrors.phone && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {formErrors.phone}
-                    </p>
-                  )}
-                </div>
-              </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <SelectField
+                id="onboarding-prefix"
+                label="Prefix (optional)"
+                value={prefix}
+                onChange={(e) => setPrefix(e.target.value)}
+              >
+                <option value="">None</option>
+                <option value="Mr.">Mr.</option>
+                <option value="Ms.">Ms.</option>
+                <option value="Mrs.">Mrs.</option>
+                <option value="Dr.">Dr.</option>
+              </SelectField>
+              <TextField
+                id="onboarding-first-name"
+                label="First name"
+                required
+                autoComplete="given-name"
+                value={firstName}
+                error={errors.firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+              />
+              <TextField
+                id="onboarding-middle-name"
+                label="Middle name (optional)"
+                autoComplete="additional-name"
+                value={middleName}
+                onChange={(e) => setMiddleName(e.target.value)}
+              />
+              <TextField
+                id="onboarding-last-name"
+                label="Last name"
+                required
+                autoComplete="family-name"
+                value={lastName}
+                error={errors.lastName}
+                onChange={(e) => setLastName(e.target.value)}
+              />
+              <TextField
+                id="onboarding-email"
+                label="Email"
+                type="email"
+                readOnly
+                value={user.email ?? ""}
+                hint="This is your registered email."
+              />
+              <TextField
+                id="onboarding-phone"
+                label="Phone number"
+                type="tel"
+                required
+                autoComplete="tel"
+                placeholder="+2348012345678"
+                value={phone}
+                error={errors.phone}
+                onChange={(e) => setPhone(e.target.value)}
+              />
             </div>
-          )}
+          </section>
+        )}
 
-          {/* Step 2: Career Stage & Goals */}
-          {step === 2 && (
-            <div>
-              <h2 className="text-2xl font-bold mb-2 text-slate-800">
-                Career Information
-              </h2>
-              <p className="text-slate-600 mb-6">
-                Help us understand your professional background
-              </p>
-
-              <div className="space-y-6">
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-3">
-                    What&apos;s your current career stage? *
+        {step === 2 && (
+          <section aria-labelledby="step-heading">
+            <h1 id="step-heading" className="mb-2 text-2xl font-bold text-slate-800">
+              Career stage
+            </h1>
+            <p className="mb-6 text-slate-600">Help us understand your professional background.</p>
+            <fieldset aria-describedby={errors.persona ? "persona-error" : undefined}>
+              <legend className="mb-3 text-sm font-semibold text-slate-700">
+                Which best describes you? *
+              </legend>
+              <div className="space-y-2">
+                {PERSONAS.map((option) => (
+                  <label key={option.value} className={choiceClass(persona === option.value)}>
+                    <input
+                      type="radio"
+                      name="persona"
+                      value={option.value}
+                      checked={persona === option.value}
+                      onChange={() => setPersona(option.value)}
+                      className="h-4 w-4 accent-blue-600"
+                    />
+                    {option.careerStage}
                   </label>
-                  <div className="space-y-2">
-                    {careerStageOptions.map((option) => (
+                ))}
+              </div>
+              {errors.persona && (
+                <p id="persona-error" className="mt-2 text-sm text-red-600">
+                  {errors.persona}
+                </p>
+              )}
+            </fieldset>
+          </section>
+        )}
+
+        {step === 3 && (
+          <section aria-labelledby="step-heading">
+            <h1 id="step-heading" className="mb-2 text-2xl font-bold text-slate-800">
+              Current profession
+            </h1>
+            <p className="mb-6 text-slate-600">Tell us about your current role.</p>
+            <ProfessionFields
+              idPrefix="onboarding-current"
+              value={current}
+              onChange={setCurrent}
+              levelLabel="Current level"
+              required
+              errors={currentErrors}
+              categories={categories}
+              className="space-y-4"
+            />
+          </section>
+        )}
+
+        {step === 4 && (
+          <section aria-labelledby="step-heading">
+            <h1 id="step-heading" className="mb-2 text-2xl font-bold text-slate-800">
+              Goal profession
+            </h1>
+            <p className="mb-6 text-slate-600">What would you like to achieve professionally?</p>
+            <ProfessionFields
+              idPrefix="onboarding-goal"
+              value={goal}
+              onChange={setGoal}
+              levelLabel="Target level"
+              professionLabel="Goal profession"
+              required
+              errors={goalErrors}
+              categories={categories}
+              className="space-y-4"
+            />
+          </section>
+        )}
+
+        {step === 5 && (
+          <section aria-labelledby="step-heading" className="space-y-6">
+            <div>
+              <h1 id="step-heading" className="mb-2 text-2xl font-bold text-slate-800">
+                Preferences &amp; summary
+              </h1>
+              <p className="text-slate-600">Choose your focus and review your answers.</p>
+            </div>
+
+            <fieldset>
+              <legend className="mb-3 text-sm font-semibold text-slate-700">
+                Recommend courses for
+              </legend>
+              <div className="space-y-2">
+                {PRIORITISE_OPTIONS.map((option) => (
+                  <label key={option.value} className={choiceClass(prioritise === option.value)}>
+                    <input
+                      type="radio"
+                      name="prioritise"
+                      value={option.value}
+                      checked={prioritise === option.value}
+                      onChange={() => setPrioritise(option.value)}
+                      className="h-4 w-4 accent-blue-600"
+                    />
+                    {option.label}
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+
+            {suggestedTags.length > 0 && (
+              <fieldset>
+                <legend className="mb-3 text-sm font-semibold text-slate-700">
+                  Interests (select any that apply)
+                </legend>
+                <div className="flex flex-wrap gap-2">
+                  {suggestedTags.map((tag) => {
+                    const selected = preferredTags.includes(tag);
+                    return (
                       <button
-                        key={option}
+                        key={tag}
+                        type="button"
+                        aria-pressed={selected}
                         onClick={() =>
-                          setFormData({ ...formData, careerStage: option })
+                          setPreferredTags((tags) =>
+                            selected ? tags.filter((t) => t !== tag) : [...tags, tag],
+                          )
                         }
-                        className={`w-full p-4 text-left border rounded-lg transition-all ${
-                          formData.careerStage === option
-                            ? "border-blue-600 bg-blue-50 text-blue-700"
-                            : "border-slate-200 hover:border-blue-300 hover:bg-slate-50"
+                        className={`rounded-full px-4 py-2 text-sm font-medium transition-all ${
+                          selected ? "bg-blue-600 text-white" : "bg-slate-200 text-slate-800 hover:bg-slate-300"
                         }`}
                       >
-                        {option}
+                        {tag}
                       </button>
-                    ))}
-                  </div>
-                  {formErrors.careerStage && (
-                    <p className="text-red-500 text-xs mt-2">
-                      {formErrors.careerStage}
-                    </p>
-                  )}
+                    );
+                  })}
                 </div>
+              </fieldset>
+            )}
 
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-3">
-                    What&apos;s your primary goal? *
-                  </label>
-                  <div className="space-y-2">
-                    {primaryGoalOptions.map((option) => (
-                      <button
-                        key={option}
-                        onClick={() =>
-                          setFormData({ ...formData, primaryGoal: option })
-                        }
-                        className={`w-full p-4 text-left border rounded-lg transition-all ${
-                          formData.primaryGoal === option
-                            ? "border-blue-600 bg-blue-50 text-blue-700"
-                            : "border-slate-200 hover:border-blue-300 hover:bg-slate-50"
-                        }`}
-                      >
-                        {option}
-                      </button>
-                    ))}
-                  </div>
-                  {formErrors.primaryGoal && (
-                    <p className="text-red-500 text-xs mt-2">
-                      {formErrors.primaryGoal}
-                    </p>
-                  )}
-                </div>
-              </div>
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-6">
+              <h2 className="mb-4 font-semibold text-slate-800">Summary</h2>
+              <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm text-slate-700">
+                <dt className="font-semibold">Name</dt>
+                <dd>{[prefix, firstName, middleName, lastName].filter(Boolean).join(" ")}</dd>
+                <dt className="font-semibold">Phone</dt>
+                <dd>{phone}</dd>
+                <dt className="font-semibold">Career stage</dt>
+                <dd>{getPersonaLabel(persona)}</dd>
+                <dt className="font-semibold">Current role</dt>
+                <dd>
+                  {current.profession}
+                  {current.level ? ` (${getProficiencyLabel(current.level)})` : ""}
+                </dd>
+                <dt className="font-semibold">Goal role</dt>
+                <dd>
+                  {goal.profession}
+                  {goal.level ? ` (${getProficiencyLabel(goal.level)})` : ""}
+                </dd>
+              </dl>
             </div>
-          )}
 
-          {/* Step 3: Current Profession */}
-          {step === 3 && (
-            <div>
-              <h2 className="text-2xl font-bold mb-2 text-slate-800">
-                Current Profession
-              </h2>
-              <p className="text-slate-600 mb-6">
-                Tell us about your current professional background
+            {(updateProfile.isError || categories.error) && (
+              <p role="alert" className="rounded-lg bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+                {updateProfile.isError ? getErrorMessage(updateProfile.error) : categories.error}
               </p>
+            )}
+          </section>
+        )}
 
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">
-                    Category *
-                  </label>
-                  <select
-                    value={formData.currentProfession.category || ""}
-                    onChange={(e) => handleCurrentCategoryChange(e.target.value)}
-                    disabled={categoriesLoading}
-                    className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 ${
-                      formErrors.currentCategory
-                        ? "border-red-500 focus:ring-red-500"
-                        : "border-slate-300 focus:ring-blue-500"
-                    }`}
-                  >
-                    <option value="">
-                      {categoriesLoading
-                        ? "Loading categories..."
-                        : "Select a category"}
-                    </option>
-                    {categories.map((cat) => (
-                      <option key={cat} value={cat}>
-                        {cat}
-                      </option>
-                    ))}
-                  </select>
-                  {formErrors.currentCategory && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {formErrors.currentCategory}
-                    </p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">
-                    Sub-Category *
-                  </label>
-                  <select
-                    value={formData.currentProfession.subCategory || ""}
-                    onChange={(e) =>
-                      handleCurrentSubcategoryChange(e.target.value)
-                    }
-                    disabled={!formData.currentProfession.category}
-                    className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 disabled:bg-slate-100 disabled:cursor-not-allowed ${
-                      formErrors.currentSubCategory
-                        ? "border-red-500 focus:ring-red-500"
-                        : "border-slate-300 focus:ring-blue-500"
-                    }`}
-                  >
-                    <option value="">
-                      {formData.currentProfession.category
-                        ? "Select a sub-category"
-                        : "Select a category first"}
-                    </option>
-                    {currentSubcategories.map((sub) => (
-                      <option key={sub} value={sub}>
-                        {sub}
-                      </option>
-                    ))}
-                  </select>
-                  {formErrors.currentSubCategory && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {formErrors.currentSubCategory}
-                    </p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">
-                    Profession *
-                  </label>
-                  <select
-                    value={isCustomCurrent ? "__custom__" : formData.currentProfession.profession || ""}
-                    onChange={(e) => {
-                      const value = e.target.value;
-
-                      if (value === "__custom__") {
-                        setIsCustomCurrent(true);
-                        setFormData({
-                          ...formData,
-                          currentProfession: {
-                            ...formData.currentProfession,
-                            profession: "",
-                          },
-                        });
-                        return;
-                      }
-
-                      setIsCustomCurrent(false);
-                      setFormData({
-                        ...formData,
-                        currentProfession: {
-                          ...formData.currentProfession,
-                          profession: value,
-                        },
-                      });
-                    }}
-                    disabled={!formData.currentProfession.subCategory}
-                    className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 disabled:bg-slate-100 disabled:cursor-not-allowed ${
-                      formErrors.currentProfession
-                        ? "border-red-500 focus:ring-red-500"
-                        : "border-slate-300 focus:ring-blue-500"
-                    }`}
-                  >
-                    <option value="">
-                      {formData.currentProfession.subCategory
-                        ? "Select a profession"
-                        : "Select a sub-category first"}
-                    </option>
-                    {currentProfessions.map((prof) => (
-                      <option key={prof} value={prof}>
-                        {prof}
-                      </option>
-                    ))}
-                    {formData.currentProfession.subCategory && (
-                      <option value="__custom__">Other (Type custom profession)</option>
-                    )}
-                  </select>
-                  {isCustomCurrent && (
-                    <input
-                      type="text"
-                      placeholder="Enter your current profession"
-                      value={formData.currentProfession.profession || ""}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          currentProfession: {
-                            ...formData.currentProfession,
-                            profession: e.target.value,
-                          },
-                        })
-                      }
-                      className="w-full mt-2 p-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  )}
-                  {formErrors.currentProfession && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {formErrors.currentProfession}
-                    </p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">
-                    Proficiency Level *
-                  </label>
-                  <select
-                    value={formData.currentProfession.level || ""}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        currentProfession: {
-                          ...formData.currentProfession,
-                          level: parseInt(e.target.value),
-                        },
-                      })
-                    }
-                    className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 ${
-                      formErrors.currentLevel
-                        ? "border-red-500 focus:ring-red-500"
-                        : "border-slate-300 focus:ring-blue-500"
-                    }`}
-                  >
-                    <option value="">Select your proficiency level</option>
-                    {levelOptions.map((level) => (
-                      <option key={level.value} value={level.value}>
-                        {level.label}
-                      </option>
-                    ))}
-                  </select>
-                  {formErrors.currentLevel && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {formErrors.currentLevel}
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Step 4: Goal Profession */}
-          {step === 4 && (
-            <div>
-              <h2 className="text-2xl font-bold mb-2 text-slate-800">
-                Goal Profession
-              </h2>
-              <p className="text-slate-600 mb-6">
-                What would you like to achieve professionally?
-              </p>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">
-                    Category *
-                  </label>
-                  <select
-                    value={formData.goalProfession.category || ""}
-                    onChange={(e) => handleGoalCategoryChange(e.target.value)}
-                    disabled={categoriesLoading}
-                    className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 ${
-                      formErrors.goalCategory
-                        ? "border-red-500 focus:ring-red-500"
-                        : "border-slate-300 focus:ring-blue-500"
-                    }`}
-                  >
-                    <option value="">
-                      {categoriesLoading
-                        ? "Loading categories..."
-                        : "Select a category"}
-                    </option>
-                    {categories.map((cat) => (
-                      <option key={cat} value={cat}>
-                        {cat}
-                      </option>
-                    ))}
-                  </select>
-                  {formErrors.goalCategory && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {formErrors.goalCategory}
-                    </p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">
-                    Sub-Category *
-                  </label>
-                  <select
-                    value={formData.goalProfession.subCategory || ""}
-                    onChange={(e) =>
-                      handleGoalSubcategoryChange(e.target.value)
-                    }
-                    disabled={!formData.goalProfession.category}
-                    className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 disabled:bg-slate-100 disabled:cursor-not-allowed ${
-                      formErrors.goalSubCategory
-                        ? "border-red-500 focus:ring-red-500"
-                        : "border-slate-300 focus:ring-blue-500"
-                    }`}
-                  >
-                    <option value="">
-                      {formData.goalProfession.category
-                        ? "Select a sub-category"
-                        : "Select a category first"}
-                    </option>
-                    {goalSubcategories.map((sub) => (
-                      <option key={sub} value={sub}>
-                        {sub}
-                      </option>
-                    ))}
-                  </select>
-                  {formErrors.goalSubCategory && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {formErrors.goalSubCategory}
-                    </p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">
-                    Profession *
-                  </label>
-                  <select
-                    value={isCustomGoal ? "__custom__" : formData.goalProfession.profession || ""}
-                    onChange={(e) => {
-                      const value = e.target.value;
-
-                      if (value === "__custom__") {
-                        setIsCustomGoal(true);
-                        setFormData({
-                          ...formData,
-                          goalProfession: {
-                            ...formData.goalProfession,
-                            profession: "",
-                          },
-                        });
-                        return;
-                      }
-
-                      setIsCustomGoal(false);
-                      setFormData({
-                        ...formData,
-                        goalProfession: {
-                          ...formData.goalProfession,
-                          profession: value,
-                        },
-                      });
-                    }}
-                    disabled={!formData.goalProfession.subCategory}
-                    className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 disabled:bg-slate-100 disabled:cursor-not-allowed ${
-                      formErrors.goalProfession
-                        ? "border-red-500 focus:ring-red-500"
-                        : "border-slate-300 focus:ring-blue-500"
-                    }`}
-                  >
-                    <option value="">
-                      {formData.goalProfession.subCategory
-                        ? "Select a profession"
-                        : "Select a sub-category first"}
-                    </option>
-                    {goalProfessions.map((prof) => (
-                      <option key={prof} value={prof}>
-                        {prof}
-                      </option>
-                    ))}
-                    {formData.goalProfession.subCategory && (
-                      <option value="__custom__">Other (Type custom profession)</option>
-                    )}
-                  </select>
-                  {isCustomGoal && (
-                    <input
-                      type="text"
-                      placeholder="Enter your goal profession"
-                      value={formData.goalProfession.profession || ""}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          goalProfession: {
-                            ...formData.goalProfession,
-                            profession: e.target.value,
-                          },
-                        })
-                      }
-                      className="w-full mt-2 p-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  )}
-                  {formErrors.goalProfession && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {formErrors.goalProfession}
-                    </p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">
-                    Target Level *
-                  </label>
-                  <select
-                    value={formData.goalProfession.level || ""}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        goalProfession: {
-                          ...formData.goalProfession,
-                          level: parseInt(e.target.value),
-                        },
-                      })
-                    }
-                    className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 ${
-                      formErrors.goalLevel
-                        ? "border-red-500 focus:ring-red-500"
-                        : "border-slate-300 focus:ring-blue-500"
-                    }`}
-                  >
-                    <option value="">Select your target level</option>
-                    {levelOptions.map((level) => (
-                      <option key={level.value} value={level.value}>
-                        {level.label}
-                      </option>
-                    ))}
-                  </select>
-                  {formErrors.goalLevel && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {formErrors.goalLevel}
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Step 5: Preferences & Summary */}
-          {step === 5 && (
-            <div>
-              <h2 className="text-2xl font-bold mb-2 text-slate-800">
-                Preferences & Summary
-              </h2>
-              <p className="text-slate-600 mb-6">
-                Choose your preferred focus and review your information
-              </p>
-
-              <div className="space-y-6">
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-3">
-                    What should we prioritize?
-                  </label>
-                  <div className="space-y-2">
-                    {["Goal Profession", "Current Profession", "Both"].map(
-                      (option) => (
-                        <button
-                          key={option}
-                          onClick={() =>
-                            setFormData({
-                              ...formData,
-                              prioritise: option as
-                                | "Goal Profession"
-                                | "Current Profession"
-                                | "Both",
-                            })
-                          }
-                          className={`w-full p-3 text-left border rounded-lg transition-all ${
-                            formData.prioritise === option
-                              ? "border-blue-600 bg-blue-50 text-blue-700"
-                              : "border-slate-200 hover:border-blue-300 hover:bg-slate-50"
-                          }`}
-                        >
-                          {option}
-                        </button>
-                      )
-                    )}
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-3">
-                    Preferred Interests (Select relevant tags)
-                  </label>
-                  <div className="flex flex-wrap gap-2">
-                    {[...currentInterests, ...goalInterests]
-                      .filter((v, i, a) => a.indexOf(v) === i)
-                      .map((tag) => (
-                        <button
-                          key={tag}
-                          onClick={() => toggleTag(tag)}
-                          className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                            formData.preferredTags.includes(tag)
-                              ? "bg-blue-600 text-white"
-                              : "bg-slate-200 text-slate-800 hover:bg-slate-300"
-                          }`}
-                        >
-                          {tag}
-                        </button>
-                      ))}
-                  </div>
-                </div>
-
-                <div className="bg-slate-50 p-6 rounded-lg border border-slate-200">
-                  <h3 className="font-semibold text-slate-800 mb-4">
-                    Profile Summary
-                  </h3>
-                  <div className="space-y-2 text-sm text-slate-700">
-                    <p>
-                      <strong>Name:</strong> {formData.prefix}{" "}
-                      {formData.firstName} {formData.middleName}{" "}
-                      {formData.lastName}
-                    </p>
-                    <p>
-                      <strong>Email:</strong> {formData.email}
-                    </p>
-                    <p>
-                      <strong>Phone:</strong> {formData.phone}
-                    </p>
-                    <p>
-                      <strong>Career Stage:</strong> {formData.careerStage}
-                    </p>
-                    <p>
-                      <strong>Primary Goal:</strong> {formData.primaryGoal}
-                    </p>
-                    <p>
-                      <strong>Current Role:</strong>{" "}
-                      {formData.currentProfession.profession}
-                    </p>
-                    <p>
-                      <strong>Goal Role:</strong>{" "}
-                      {formData.goalProfession.profession}
-                    </p>
-                    <p>
-                      <strong>Priority:</strong> {formData.prioritise}
-                    </p>
-                  </div>
-                </div>
-
-                {error && (
-                  <div className="mb-4">
-                    <ErrorMsg message={error} />
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Navigation buttons */}
-        <div className="flex gap-4 mt-8">
+        <div className="mt-8 flex gap-4">
           {step > 1 && (
             <button
-              onClick={handlePrevious}
-              className="flex-1 py-3 px-6 border border-slate-300 text-slate-700 rounded-xl font-semibold hover:bg-slate-50 transition-colors"
+              type="button"
+              onClick={() => setStep((value) => Math.max(1, value - 1))}
+              className="flex-1 rounded-xl border border-slate-300 px-6 py-3 font-semibold text-slate-700 transition-colors hover:bg-slate-50"
             >
               Previous
             </button>
           )}
-
-          {step < totalSteps ? (
+          {step < TOTAL_STEPS ? (
             <button
-              onClick={handleNext}
-              disabled={loading}
-              className="flex-1 py-3 px-6 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              type="button"
+              onClick={next}
+              className="flex-1 rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white transition-colors hover:bg-blue-700"
             >
-              {loading ? "Processing..." : "Next"}
+              Next
             </button>
           ) : (
             <button
+              type="button"
               onClick={finalize}
-              disabled={loading}
-              className="flex-1 py-3 px-6 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              disabled={updateProfile.isPending}
+              className="flex-1 rounded-xl bg-green-700 px-6 py-3 font-semibold text-white transition-colors hover:bg-green-800 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {loading ? "Finalizing..." : "Complete Onboarding"}
+              {updateProfile.isPending ? "Saving..." : "Complete onboarding"}
             </button>
           )}
         </div>
       </div>
-    </div>
+    </main>
   );
+};
+
+const OnboardingPage = () => {
+  const { currentUser, loading } = useGlobal();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (loading) return;
+    if (!currentUser) router.replace("/auth");
+    else if (currentUser.persona) router.replace("/");
+  }, [currentUser, loading, router]);
+
+  if (!currentUser || currentUser.persona) {
+    return (
+      <div className="min-h-screen bg-slate-50 p-4 lg:p-12">
+        <Loading />
+      </div>
+    );
+  }
+
+  return <OnboardingForm key={currentUser.id} user={currentUser} />;
 };
 
 export default OnboardingPage;

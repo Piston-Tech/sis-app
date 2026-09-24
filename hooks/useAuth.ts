@@ -1,24 +1,64 @@
+"use client";
+
 import { useGlobal } from "@/app/GlobalProvider";
-// import { AuthDataProps } from "@/components/Auth";
 import apiClient from "@/services/apiClient";
-import { SignupCredentials, User } from "@/types";
-import LoginAuthResponse from "@/types/LoginAuthResponse";
-import SignupAuthResponse from "@/types/SignupAuthResponse";
 import StudentCreationErrors from "@/types/StudentCreationError";
-import handleRequestError from "@/utils/handleRequestError";
+import {
+  getErrorMessage,
+  getErrorStatus,
+  getFieldErrors,
+  RATE_LIMIT_MESSAGE,
+} from "@/components/student/errors";
 import { useGoogleLogin } from "@react-oauth/google";
+import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { useLinkedIn } from "react-linkedin-login-oauth2";
+
+type LoginStep =
+  | "options"
+  | "otp"
+  | "create-password"
+  | "create-account"
+  | "password";
+
+const initErrors: StudentCreationErrors = {
+  prefix: "",
+  firstName: "",
+  middleName: "",
+  lastName: "",
+  email: "",
+  phone: "",
+  password: "",
+  confirmPassword: "",
+  verificationToken: "",
+  metaData: "",
+};
+
+/** Signs the student out and clears every cached query. */
+export function useLogout() {
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const { removeUser } = useGlobal();
+
+  return useCallback(async () => {
+    try {
+      await apiClient.post("/auth/logout", {});
+    } catch {
+      // Even if the request fails, drop local state and go to sign-in.
+    }
+    removeUser();
+    queryClient.clear();
+    router.push("/auth");
+  }, [queryClient, removeUser, router]);
+}
 
 export function useAuth() {
   const router = useRouter();
+  const { currentUser, getCurrentUser } = useGlobal();
+  const logout = useLogout();
 
-  const { currentUser, getCurrentUser, removeUser } = useGlobal();
-
-  const [loginStep, setLoginStep] = useState<
-    "options" | "otp" | "create-password" | "create-account" | "password"
-  >("options");
+  const [loginStep, setLoginStep] = useState<LoginStep>("options");
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
   const [prefix, setPrefix] = useState("");
@@ -29,136 +69,103 @@ export function useAuth() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  /** Non-error feedback, e.g. "Password created, please sign in." */
+  const [notice, setNotice] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [verificationToken, setVerificationToken] = useState("");
-
   const [forgotPassword, setForgotPassword] = useState(false);
-
-  const initErrors = {
-    prefix: "",
-    firstName: "",
-    middleName: "",
-    lastName: "",
-    email: "",
-    phone: "",
-    password: "",
-    confirmPassword: "",
-    verificationToken: "",
-    metaData: "",
-  };
-
   const [errors, setErrors] = useState<StudentCreationErrors>(initErrors);
 
+  /**
+   * Shows a failed request to the user. 429s always get the rate-limit
+   * message; field errors go to `errors` when `withFieldErrors` is set.
+   */
+  const reportError = (e: unknown, withFieldErrors = false) => {
+    if (getErrorStatus(e) === 429) {
+      setError(RATE_LIMIT_MESSAGE);
+      return;
+    }
+    const fieldErrors = getFieldErrors(e);
+    if (withFieldErrors && Object.keys(fieldErrors).length > 0) {
+      setErrors({ ...initErrors, ...fieldErrors });
+      return;
+    }
+    setError(getErrorMessage(e));
+  };
+
+  const finishSignIn = async () => {
+    await getCurrentUser();
+    router.push("/");
+  };
+
   const googleLogin = useGoogleLogin({
-    onSuccess: ({ access_token }) => {
-      apiClient
-        .post("/auth/google", { access_token })
-        .then(() => {
-          getCurrentUser();
-          router.push("/");
-        })
-        .catch((e) =>
-          handleRequestError(e, setError, (errors) => setErrors(errors)),
-        );
+    onSuccess: async ({ access_token }) => {
+      setError(null);
+      try {
+        await apiClient.post("/auth/google", { access_token });
+        await finishSignIn();
+      } catch (e) {
+        reportError(e);
+      }
     },
-    onError: (error) => {
-      console.log(error);
-    },
-    // redirect_uri: "http://app.pistonandfusion.org/auth/google", // for Next.js, you can use `${typeof window === 'object' && window.location.origin}/auth/google/callback`
+    onError: () => setError("Google sign-in didn't complete. Please try again."),
   });
 
   const { linkedInLogin } = useLinkedIn({
     clientId: process.env.NEXT_PUBLIC_LINKEDIN_CLIENT_ID ?? "",
     redirectUri:
       process.env.NEXT_PUBLIC_LINKEDIN_REDIRECT_URI ??
-      `${typeof window === "object" && window.location.origin}/auth/linkedin`, // for Next.js, you can use `${typeof window === 'object' && window.location.origin}/auth/linkedin`
-    onSuccess: (code) => {
-      apiClient
-        .post("/auth/linkedin", { code })
-        .then(() => {
-          getCurrentUser();
-          router.push("/");
-        })
-        .catch((e) =>
-          handleRequestError(e, setError, (errors) => setErrors(errors)),
-        );
+      `${typeof window === "object" ? window.location.origin : ""}/auth/linkedin`,
+    onSuccess: async (code) => {
+      setError(null);
+      try {
+        await apiClient.post("/auth/linkedin", { code });
+        await finishSignIn();
+      } catch (e) {
+        reportError(e);
+      }
     },
-    onError: (error) => {
-      console.log(error);
+    onError: (e) => {
+      // The popup being closed by the user is not worth an error message.
+      if (e?.error === "user_closed_popup") return;
+      setError("LinkedIn sign-in didn't complete. Please try again.");
     },
-    scope: "openid profile email", // Requesting basic profile and email access
+    scope: "openid profile email",
   });
 
+  /** Returns true when the OTP was sent. */
   const sendOTP = async () => {
     try {
       const { data } = await apiClient.post("/auth/send-otp", { email });
-
-      if (!data.success) {
-        throw new Error(data.error || "Failed to send OTP");
-      }
-
-      console.log(data);
-
+      if (!data.success) throw new Error(data.error || "Failed to send the code");
+      setOtp("");
       setLoginStep("otp");
-    } catch (e: any) {
-      handleRequestError(e, setError, (errors) =>
-        setError((Object.values(errors)[0] as string) || "An error occurred"),
-      );
-    }
-  };
-
-  const verifyOTP = async () => {
-    try {
-      const { data } = await apiClient.post("/auth/verify-otp", {
-        email,
-        otp,
-      });
-
-      if (!data.success) {
-        throw new Error(data.error || "Failed to verify OTP");
-      }
-
-      const { exists, hasPassword, verificationToken } = data;
-
-      setVerificationToken(verificationToken);
-
-      if (!exists) return setLoginStep("create-account");
-
-      if (!hasPassword || forgotPassword)
-        return setLoginStep("create-password");
-
-      return setLoginStep("password");
-    } catch (e: any) {
-      handleRequestError(e, setError, (errors) =>
-        setError((Object.values(errors)[0] as string) || "An error occurred"),
-      );
+      return true;
+    } catch (e) {
+      reportError(e);
+      return false;
     }
   };
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     setIsSubmitting(true);
     setError(null);
+    setNotice(null);
 
     try {
       const { data } = await apiClient.post("/auth/check-email", { email });
-
-      const { success, exists, hasPassword } = data;
-
-      console.log(success, exists, hasPassword);
-
-      if (success) {
-        if (!exists || !hasPassword) return await sendOTP();
-        setLoginStep("password");
+      if (!data.success) {
+        setError(data.error || "We couldn't check that email address.");
         return;
       }
-
-      setError(data.error || "An error occurred");
-    } catch (e: any) {
-      handleRequestError(e, setError, (errors) =>
-        setError((Object.values(errors)[0] as string) || "An error occurred"),
-      );
+      if (!data.exists || !data.hasPassword) {
+        await sendOTP();
+        return;
+      }
+      setLoginStep("password");
+    } catch (err) {
+      reportError(err);
     } finally {
       setIsSubmitting(false);
     }
@@ -166,14 +173,21 @@ export function useAuth() {
 
   const handleOtpSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     setIsSubmitting(true);
     setError(null);
+    setNotice(null);
 
     try {
-      await verifyOTP();
-    } catch (err: any) {
-      setError(err.message);
+      const { data } = await apiClient.post("/auth/verify-otp", { email, otp });
+      if (!data.success) throw new Error(data.error || "That code didn't work");
+
+      setVerificationToken(data.verificationToken);
+
+      if (!data.exists) setLoginStep("create-account");
+      else if (!data.hasPassword || forgotPassword) setLoginStep("create-password");
+      else setLoginStep("password");
+    } catch (err) {
+      reportError(err);
     } finally {
       setIsSubmitting(false);
     }
@@ -181,11 +195,9 @@ export function useAuth() {
 
   const handleCreatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
-
     setIsSubmitting(true);
     setError(null);
-
-    setForgotPassword(false);
+    setNotice(null);
 
     try {
       const { data } = await apiClient.post("/auth/create-password", {
@@ -194,19 +206,15 @@ export function useAuth() {
         password,
         confirmPassword,
       });
+      if (!data.success) throw new Error(data.error || "Failed to create password");
 
-      if (!data.success) {
-        throw new Error(data.error || "Failed to create password");
-      }
-
-      alert("Password created successfully! Please log in.");
+      setForgotPassword(false);
       setPassword("");
       setConfirmPassword("");
+      setNotice("Your password has been saved. Please sign in.");
       setLoginStep("password");
-    } catch (e: any) {
-      handleRequestError(e, setError, (errors) =>
-        setError((Object.values(errors)[0] as string) || "An error occurred"),
-      );
+    } catch (err) {
+      reportError(err);
     } finally {
       setIsSubmitting(false);
     }
@@ -214,9 +222,9 @@ export function useAuth() {
 
   const handleCreateAccount = async (e: React.FormEvent) => {
     e.preventDefault();
-
     setIsSubmitting(true);
     setError(null);
+    setNotice(null);
     setErrors(initErrors);
 
     try {
@@ -231,15 +239,14 @@ export function useAuth() {
         phone,
         verificationToken,
       });
+      if (!data.success) throw new Error(data.error || "Failed to create account");
 
-      if (!data.success) {
-        throw new Error(data.error || "Failed to create account");
-      }
-
-      alert("Account created successfully! Please log in.");
+      setPassword("");
+      setConfirmPassword("");
+      setNotice("Your account has been created. Please sign in.");
       setLoginStep("password");
-    } catch (e: any) {
-      handleRequestError(e, setError, (errors) => setErrors(errors));
+    } catch (err) {
+      reportError(err, true);
     } finally {
       setIsSubmitting(false);
     }
@@ -247,187 +254,56 @@ export function useAuth() {
 
   const handlePasswordLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-
     setIsSubmitting(true);
     setError(null);
 
     try {
-      const { data } = await apiClient.post("/auth/login", {
-        email,
-        password,
-      });
-
-      if (!data.success) {
-        throw new Error(data.error || "Failed to login");
-      }
-
-      getCurrentUser();
-      router.push("/");
-    } catch (e: any) {
-      handleRequestError(e, setError, (errors) => setErrors(errors));
+      const { data } = await apiClient.post("/auth/login", { email, password });
+      if (!data.success) throw new Error(data.error || "Failed to sign in");
+      setNotice(null);
+      await finishSignIn();
+    } catch (err) {
+      reportError(err);
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleForgotPassword = async () => {
-    // Implementation for forgot password functionality
     setIsSubmitting(true);
+    setError(null);
+    setNotice(null);
     setForgotPassword(true);
-    await sendOTP();
+    const sent = await sendOTP();
+    if (!sent) setForgotPassword(false);
     setIsSubmitting(false);
   };
 
-  // const handleLogin = (role: UserRole = UserRole.PROFESSIONAL) => {
-  //   setUser({
-  //     id: Math.random().toString(36).substr(2, 9),
-  //     name: "Adewale Thompson",
-  //     email: "a.thompson@gmail.com",
-  //     role: role,
-  //     tier: MembershipTier.BASIC,
-  //     skills: ["Project Management", "Agile"],
-  //     goals: ["Executive Leadership"],
-  //     onboarded: false,
-  //     status: "Active",
-  //     progress: 0,
-  //   });
-  // };
-
   const handleLogout = async () => {
-    await apiClient.post("/auth/logout", {});
-    // setUser(null);
-    removeUser();
     setLoginStep("options");
     setEmail("");
     setOtp("");
     setPassword("");
     setConfirmPassword("");
     setForgotPassword(false);
-
-    router.push("/auth");
+    await logout();
   };
-
-  const handleOnboardingComplete = (data: Partial<User>) => {
-    // setUser((prev) => (prev ? { ...prev, ...data, onboarded: true } : null));
-  };
-
-  // const [user, setUser] = useState(() => {
-  //   // Load saved user from localStorage if available
-  //   const saved = localStorage.getItem("user");
-  //   return saved ? JSON.parse(saved) : null;
-  // });
 
   const handleSocialLogin = (provider: "google" | "linkedin") => {
+    setError(null);
     if (provider === "google") return googleLogin();
-    if (provider === "linkedin") return linkedInLogin();
-  };
-
-  // const login = async (
-  //   credentials: LoginCredentials,
-  //   setErrors: (value: React.SetStateAction<AuthDataProps>) => void,
-  // ): Promise<void> => {
-  //   try {
-  //     const { data } = await apiClient.post("/auth/login", credentials);
-
-  //     console.log("Client: ", data);
-
-  //     if (data.success) {
-  //       finalizeLogin(data.user);
-  //       router.push("/profile");
-  //     } else {
-  //       if (data.errors) {
-  //         setErrors(data.errors);
-  //       } else if (data.error) {
-  //         alert(data.error);
-  //       }
-  //     }
-  //   } catch (e: any) {
-  //     const {
-  //       response: {
-  //         data: { errors, error },
-  //       },
-  //     } = e;
-
-  //     console.log(error, errors);
-
-  //     if (errors) {
-  //       setErrors(errors);
-  //     } else if (error) {
-  //       alert(error);
-  //     }
-  //   }
-  //   // if (response.data.token) {
-  //   //   localStorage.setItem("token", response.data.token);
-  //   // }
-  //   // return response.data;
-  // };
-
-  // const signup = async (
-  //   credentials: SignupCredentials,
-  // ): Promise<SignupAuthResponse> => {
-  //   const response = await apiClient.post("/auth/signup", credentials);
-  //   // if (response.data.token) {
-  //   //     localStorage.setItem('token', response.data.token);
-  //   // }
-  //   return response.data;
-  // };
-
-  const logout = async (): Promise<void> => {
-    // localStorage.removeItem("token");
-    await apiClient.post("/auth/logout", {});
-  };
-
-  // const getCurrentUser = async (): Promise<LoginAuthResponse> => {
-  //   const response = await apiClient.get("/auth/me");
-  //   return response.data;
-  //   // try {
-  //   // } catch {
-  //   //   return null;
-  //   // }
-  // };
-
-  const isAuthenticated = (): boolean => {
-    return currentUser !== null;
+    return linkedInLogin();
   };
 
   const useDifferentEmail = () => {
     setEmail("");
     setOtp("");
     setPassword("");
+    setError(null);
+    setNotice(null);
     setLoginStep("options");
-
     setForgotPassword(false);
   };
-
-  // const login = async ({ email, password }: LoginCredentials) => {
-  //   const { user } = await authService.login({ email, password });
-  //   setUser(user);
-  //   // localStorage.setItem("user", JSON.stringify(userData));
-  // };
-
-  // const signup = async ({
-  //   firstName,
-  //   lastName,
-  //   email,
-  //   password,
-  // }: SignupCredentials) => {
-  //   const data = await authService.signup({
-  //     firstName,
-  //     lastName,
-  //     email,
-  //     password,
-  //   });
-
-  //   if (data.user) {
-  //     setUser(user);
-  //   }
-  //   // localStorage.setItem("user", JSON.stringify(userData));
-  // };
-
-  // const logout = () => {
-  //   setUser(null);
-  //   localStorage.removeItem("user");
-  // };
 
   return {
     currentUser,
@@ -452,6 +328,7 @@ export function useAuth() {
     confirmPassword,
     setConfirmPassword,
     error,
+    notice,
     errors,
     isSubmitting,
 

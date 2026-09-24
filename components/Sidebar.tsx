@@ -1,192 +1,125 @@
-import React from "react";
-import { User, UserDetails, UserRole } from "../types";
+"use client";
+
 import Image from "next/image";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   BookMarked,
   CreditCard,
   FileBadge,
-  Form,
-  GraduationCap,
   LayoutDashboard,
-  LibraryBig,
+  LogOut,
   LucideIcon,
-  Users,
+  UserRound,
+  X,
 } from "lucide-react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-// import logo48 from "@/public/logo-48.png";
 
 interface SidebarProps {
-  user: UserDetails | null;
-  activeTab: string;
-  setActiveTab: (tab: string) => void;
   isOpen: boolean;
   onClose: () => void;
   onLogout: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({
-  user,
-  activeTab,
-  setActiveTab,
-  isOpen,
-  onClose,
-  onLogout,
-}) => {
-  const commonLinks: Array<{ name: string; icon: LucideIcon; href: string }> = [
-    {
-      name: "Home",
-      icon: LayoutDashboard,
-      href: "/",
-    },
-    {
-      name: "Courses",
-      icon: BookMarked,
-      href: "/courses",
-    },
-    {
-      name: "My Program",
-      icon: GraduationCap,
-      href: "/my-program",
-    },
-    // {
-    //   name: "Path",
-    //   icon: GraduationCap,
-    // },
-    {
-      name: "Certificates",
-      icon: FileBadge,
-      href: "/certificates",
-    },
-    {
-      name: "Payments",
-      icon: CreditCard,
-      href: "/payments",
-    },
-    {
-      name: "Community",
-      icon: Users,
-      href: "/community",
-    },
-    {
-      name: "Forms",
-      icon: Form,
-      href: "/forms",
-    },
-  ];
+interface NavLink {
+  name: string;
+  icon: LucideIcon;
+  href: string;
+  /** Path prefix used to highlight the link. */
+  match: string;
+}
 
-  const menuItems = commonLinks;
+// Only pages backed by real data are listed. "My Program", "Community" and
+// "Forms" were placeholders and have been removed.
+const NAV_LINKS: NavLink[] = [
+  { name: "Home", icon: LayoutDashboard, href: "/", match: "/" },
+  { name: "Courses", icon: BookMarked, href: "/courses/recommendations", match: "/courses" },
+  { name: "Certificates", icon: FileBadge, href: "/certificates", match: "/certificates" },
+  { name: "Payments", icon: CreditCard, href: "/payments", match: "/payments" },
+  { name: "Profile", icon: UserRound, href: "/profile", match: "/profile" },
+];
 
-  const pathname = usePathname();
+const Sidebar = ({ isOpen, onClose, onLogout }: SidebarProps) => {
+  const pathname = usePathname() ?? "/";
+
+  const isActive = (link: NavLink) =>
+    link.match === "/" ? pathname === "/" : pathname.startsWith(link.match);
 
   return (
     <>
-      {/* Mobile Overlay */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 lg:hidden"
+          aria-hidden
+          className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm lg:hidden"
           onClick={onClose}
         />
       )}
 
       <aside
-        className={`fixed inset-y-0 left-0 w-64 bg-white border-r border-slate-200 flex flex-col h-screen z-50 transition-transform duration-300 lg:sticky lg:translate-x-0 overflow-scroll ${isOpen ? "translate-x-0" : "-translate-x-full"}`}
+        id="student-sidebar"
+        aria-label="Main navigation"
+        className={`fixed inset-y-0 left-0 z-50 flex h-screen w-64 flex-col overflow-y-auto border-r border-slate-200 bg-white transition-transform duration-300 lg:sticky lg:top-0 lg:translate-x-0 ${
+          isOpen ? "translate-x-0" : "invisible -translate-x-full lg:visible"
+        }`}
       >
-        <div className="p-6 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between p-6">
+          <Link href="/" onClick={onClose} className="flex items-center gap-3">
             <Image
               src="/logo-48.png"
-              alt="Piston & Fusion Logo"
+              alt=""
               width={40}
               height={40}
               className="rounded-xs"
             />
-            {/* <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg">
-              <span className="text-white font-black text-xl">PF</span>
-            </div> */}
-            <div>
-              <h2 className="font-extrabold text-slate-900 leading-tight">
-                Piston & Fusion
-              </h2>
-              <p className="text-[10px] text-slate-400 font-bold tracking-widest uppercase">
+            <span>
+              <span className="block font-extrabold leading-tight text-slate-900">
+                Piston &amp; Fusion
+              </span>
+              <span className="block text-xs font-bold uppercase tracking-wider text-slate-600">
                 Business Academy
-              </p>
-            </div>
-          </div>
+              </span>
+            </span>
+          </Link>
           <button
+            type="button"
             onClick={onClose}
-            className="lg:hidden p-2 text-slate-400 hover:text-slate-900"
+            aria-label="Close navigation menu"
+            className="p-2 text-slate-500 hover:text-slate-900 lg:hidden"
           >
-            <svg
-              className="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
+            <X className="h-6 w-6" aria-hidden />
           </button>
         </div>
 
-        <nav className="flex flex-col flex-1 px-4 py-6 gap-y-2">
-          {menuItems.map(({ name, icon: Icon, href }) => (
-            <Link href={href} key={name}>
-              <button
-                key={name}
-                // onClick={() => {
-                //   setActiveTab(name);
-                //   onClose();
-                // }}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-semibold ${
-                  (href === "/" ? pathname === href : pathname.startsWith(href))
-                    ? "bg-primary-900 text-white shadow-primary-200 shadow-lg"
-                    : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
+        <nav className="flex flex-1 flex-col gap-y-2 px-4 py-6">
+          {NAV_LINKS.map((link) => {
+            const active = isActive(link);
+            const Icon = link.icon;
+            return (
+              <Link
+                key={link.name}
+                href={link.href}
+                onClick={onClose}
+                aria-current={active ? "page" : undefined}
+                className={`flex w-full items-center gap-3 rounded-xl px-4 py-3 font-semibold transition-all ${
+                  active
+                    ? "bg-primary-900 text-white shadow-lg shadow-primary-200"
+                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
                 }`}
               >
-                <Icon size={20} />
-                {name}
-              </button>
-            </Link>
-          ))}
+                <Icon size={20} aria-hidden />
+                {link.name}
+              </Link>
+            );
+          })}
         </nav>
 
         <div className="p-6">
-          <div className="bg-slate-900 rounded-2xl p-5 relative overflow-hidden">
-            <div className="relative z-10">
-              <p className="text-xs font-bold text-blue-400 mb-1">PRO TIP</p>
-              <p className="text-[11px] text-slate-300 mb-4 leading-relaxed">
-                Upgrade to Elite for 1-on-1 mentorship and job referrals.
-              </p>
-              <button className="text-[10px] font-bold bg-white text-slate-900 px-3 py-1.5 rounded-lg uppercase">
-                Upgrade
-              </button>
-            </div>
-            <div className="absolute -right-4 -bottom-4 w-16 h-16 bg-blue-600 rounded-full blur-2xl opacity-50"></div>
-          </div>
-
           <button
+            type="button"
             onClick={onLogout}
-            className="w-full flex items-center gap-3 px-4 py-3 mt-6 text-slate-500 hover:text-red-600 font-semibold"
+            className="flex w-full items-center gap-3 px-4 py-3 font-semibold text-slate-600 hover:text-red-700"
           >
-            <svg
-              className="h-5 w-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-              />
-            </svg>
-            Logout
+            <LogOut className="h-5 w-5" aria-hidden />
+            Log out
           </button>
         </div>
       </aside>

@@ -1,5 +1,6 @@
 import cn from "@/utils/cn";
 import Link from "next/link";
+import type { LucideIcon } from "lucide-react";
 
 const SidebarItem = ({
   to,
@@ -8,12 +9,13 @@ const SidebarItem = ({
   active,
 }: {
   to: string;
-  icon: any;
+  icon: LucideIcon;
   label: string;
   active?: boolean;
 }) => (
   <Link
     href={to}
+    aria-current={active ? "page" : undefined}
     className={cn(
       "flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 group",
       active
