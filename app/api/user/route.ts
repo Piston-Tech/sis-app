@@ -33,10 +33,12 @@ export async function GET(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
-    const body = await request.json();
+    // The backend identifies the student from the access token, so never
+    // forward a client-supplied id.
+    const { id: _ignoredId, ...body } = await request.json();
 
     const { data, response } = await apiServer({
-      url: `/students/${body.id}`,
+      url: "/students/me",
       method: "PUT",
       body,
     });
