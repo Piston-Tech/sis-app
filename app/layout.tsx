@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import "./globals.css";
 import { GlobalProvider } from "./GlobalProvider";
+import { QueryProvider } from "./QueryProvider";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -25,7 +26,9 @@ export default function RootLayout({
         <GoogleOAuthProvider
           clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ?? ""}
         >
-          <GlobalProvider>{children}</GlobalProvider>
+          <QueryProvider>
+            <GlobalProvider>{children}</GlobalProvider>
+          </QueryProvider>
         </GoogleOAuthProvider>
       </body>
     </html>
