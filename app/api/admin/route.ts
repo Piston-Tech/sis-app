@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 
 // Current admin. Always verified with the backend (apiServer refreshes the
 // access token when needed and re-writes the adminDetails cookie on success),
-// so a revoked admin or a role change takes effect immediately instead of
+// so a revoked admin or an access-level change takes effect immediately instead of
 // being served from the 7-day adminDetails cookie.
 export const GET = withErrorHandling("admin/me", async () =>
   toNextResponse(

@@ -20,6 +20,7 @@ import SidebarItem from "@/components/SidebarItem";
 import cn from "@/utils/cn";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { adminDisplayName, useAdminGlobal } from "@/app/AdminProvider";
+import { ACCESS_LEVEL_LABELS } from "@/utils/adminAccess";
 import Link from "next/link";
 
 // Only routes that exist under app/admin/(portal).
@@ -34,12 +35,6 @@ const navigation = [
   { to: "/payments", icon: Banknote, label: "Payments" },
 ];
 
-const ROLE_LABELS: Record<string, string> = {
-  viewer: "Viewer (read-only)",
-  admin: "Admin",
-  superadmin: "Super Admin",
-};
-
 const initials = (name: string) =>
   name
     .split(/[\s@.]+/)
@@ -50,12 +45,17 @@ const initials = (name: string) =>
 
 const AdminLayout = ({ children }: { children: React.ReactNode }) => {
   const { logout } = useAdminAuth();
-  const { currentUser, role } = useAdminGlobal();
+  const { currentUser, accessLevel } = useAdminGlobal();
   const pathname = usePathname() ?? "/";
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
 
   const displayName = adminDisplayName(currentUser);
+  // Department (free text from the backend) and what the admin may do
+  const department = currentUser?.role?.trim();
+  const profileLabel = [department, ACCESS_LEVEL_LABELS[accessLevel]]
+    .filter(Boolean)
+    .join(" · ");
 
   const isActive = (to: string) =>
     to === "/" ? pathname === "/" : pathname.startsWith(to);
@@ -112,7 +112,7 @@ const AdminLayout = ({ children }: { children: React.ReactNode }) => {
                 </p>
               )}
               <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider truncate">
-                {ROLE_LABELS[role] ?? role}
+                {profileLabel}
               </p>
             </div>
             <button
@@ -204,7 +204,7 @@ const AdminLayout = ({ children }: { children: React.ReactNode }) => {
                   {displayName}
                 </p>
                 <p className="text-xs text-zinc-500 truncate">
-                  {ROLE_LABELS[role] ?? role}
+                  {profileLabel}
                 </p>
               </div>
               <button

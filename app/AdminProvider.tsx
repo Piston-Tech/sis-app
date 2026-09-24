@@ -1,7 +1,7 @@
 "use client";
 
 import adminAuthService from "@/services/adminAuthService";
-import AdminDetails from "@/types/AdminDetails";
+import AdminDetails, { type AccessLevel } from "@/types/AdminDetails";
 import AdminGlobalState from "@/types/AdminGlobalState";
 import {
   createContext,
@@ -12,20 +12,22 @@ import {
   useMemo,
   useState,
 } from "react";
+import {
+  accessCanManageAdmins,
+  accessCanWrite,
+  normaliseAccessLevel,
+} from "@/utils/adminAccess";
 
-export type AdminRole = "viewer" | "admin" | "superadmin";
-
-/** The admin user as returned by the API (role/firstName/lastName may be present). */
-export type AdminUser = AdminDetails & {
-  role?: AdminRole | string;
-  firstName?: string;
-  lastName?: string;
-};
+/**
+ * The admin user as returned by the API. `role` is the department label
+ * (display only); `accessLevel` decides what they may do.
+ */
+export type AdminUser = AdminDetails;
 
 export interface AdminContextValue extends AdminGlobalState {
   currentUser: AdminUser | null;
-  /** Normalised role; unknown or missing roles are treated as "viewer". */
-  role: AdminRole;
+  /** Normalised access level; unknown or missing is treated as "viewer" (read-only). */
+  accessLevel: AccessLevel;
   /** admin + superadmin may create / edit / delete / approve. */
   canWrite: boolean;
   /** Only superadmins may manage other admin accounts. */
@@ -34,14 +36,11 @@ export interface AdminContextValue extends AdminGlobalState {
   clear: () => void;
 }
 
-const normaliseRole = (role: unknown): AdminRole =>
-  role === "admin" || role === "superadmin" ? role : "viewer";
-
 export const AdminContext = createContext<AdminContextValue>({
   currentUser: null,
   login: () => {},
   loading: true,
-  role: "viewer",
+  accessLevel: "viewer",
   canWrite: false,
   canManageAdmins: false,
   clear: () => {},
@@ -77,14 +76,15 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
   const clear = useCallback(() => setUser(null), []);
 
   const value = useMemo<AdminContextValue>(() => {
-    const role = normaliseRole(user?.role);
+    // Permissions come from accessLevel only, never from the department (role)
+    const accessLevel = normaliseAccessLevel(user?.accessLevel);
     return {
       currentUser: user,
       login,
       loading,
-      role,
-      canWrite: !!user && (role === "admin" || role === "superadmin"),
-      canManageAdmins: !!user && role === "superadmin",
+      accessLevel,
+      canWrite: !!user && accessCanWrite(accessLevel),
+      canManageAdmins: !!user && accessCanManageAdmins(accessLevel),
       clear,
     };
   }, [user, loading, login, clear]);
