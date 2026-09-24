@@ -217,6 +217,126 @@ describe("planForward", () => {
     ).toMatchObject({ ok: false, status: 400 });
   });
 
+  describe("admin sub-routes", () => {
+    const plan = (
+      segments: string[],
+      method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE",
+      body?: unknown,
+    ) => planForward({ audience: "admin", segments, method, body });
+
+    it("allows company contacts (list/create and 4-segment update/delete)", () => {
+      expect(plan(["companies", "7", "contacts"], "GET")).toMatchObject({
+        ok: true,
+        url: "/admin/companies/7/contacts",
+      });
+      expect(
+        plan(["companies", "7", "contacts"], "POST", { name: "A" }),
+      ).toMatchObject({ ok: true, body: { name: "A" } });
+      expect(plan(["companies", "7", "contacts", "3"], "PUT")).toMatchObject({
+        ok: true,
+        url: "/admin/companies/7/contacts/3",
+      });
+      expect(
+        plan(["companies", "7", "contacts", "3"], "DELETE"),
+      ).toMatchObject({ ok: true, url: "/admin/companies/7/contacts/3" });
+    });
+
+    it("405s the wrong methods on contact routes", () => {
+      expect(plan(["companies", "7", "contacts"], "DELETE")).toMatchObject({
+        status: 405,
+        allow: "GET, POST",
+      });
+      expect(plan(["companies", "7", "contacts", "3"], "GET")).toMatchObject({
+        status: 405,
+        allow: "PUT, DELETE",
+      });
+    });
+
+    it("allows receipts: send, preview and the PDF literal", () => {
+      expect(plan(["payments", "5", "receipt"], "POST")).toMatchObject({
+        ok: true,
+        url: "/admin/payments/5/receipt",
+      });
+      expect(
+        planForward({
+          audience: "admin",
+          segments: ["payments", "5", "receipt", "preview"],
+          method: "GET",
+          search: "?receiptNo=RC-2608-026",
+        }),
+      ).toMatchObject({
+        ok: true,
+        url: "/admin/payments/5/receipt/preview?receiptNo=RC-2608-026",
+      });
+      expect(plan(["payments", "5", "receipt.pdf"], "GET")).toMatchObject({
+        ok: true,
+        url: "/admin/payments/5/receipt.pdf",
+      });
+      expect(plan(["payments", "5", "receipt.pdf"], "POST")).toMatchObject({
+        status: 405,
+      });
+      expect(plan(["payments", "5", "receipt"], "GET")).toMatchObject({
+        status: 405,
+      });
+    });
+
+    it("only allows the dot in exactly receipt.pdf", () => {
+      for (const segments of [
+        ["payments", "5", "receipt.png"],
+        ["payments", "5", "receipt.pdf", "x"],
+        ["payments", "..", "receipt.pdf"],
+        ["payments", "a.b", "receipt.pdf"],
+        ["payments", "receipt.pdf"],
+        ["students", "5", "receipt.pdf"],
+        ["companies", "7", "receipt.pdf"],
+      ]) {
+        expect(plan(segments, "GET")).toMatchObject({ ok: false, status: 404 });
+      }
+    });
+
+    it("allows the bulk endpoints (POST only)", () => {
+      expect(plan(["students", "bulk"], "POST", { rows: [] })).toMatchObject({
+        ok: true,
+        url: "/admin/students/bulk",
+      });
+      expect(plan(["transactions", "bulk"], "POST")).toMatchObject({
+        ok: true,
+        url: "/admin/transactions/bulk",
+      });
+      expect(
+        plan(["transactions", "12", "enrollments", "bulk"], "POST"),
+      ).toMatchObject({
+        ok: true,
+        url: "/admin/transactions/12/enrollments/bulk",
+      });
+      expect(plan(["students", "bulk"], "PUT")).toMatchObject({ status: 405 });
+      expect(
+        plan(["transactions", "12", "enrollments", "bulk"], "GET"),
+      ).toMatchObject({ status: 405 });
+    });
+
+    it("still 404s other 4-segment paths and unsafe ids in sub-routes", () => {
+      for (const segments of [
+        ["students", "1", "contacts", "2"],
+        ["companies", "7", "contacts", "3", "x"],
+        ["companies", "7", "other", "3"],
+        ["companies", "..", "contacts", "3"],
+        ["companies", "7", "contacts", "a/b"],
+        ["transactions", "12", "enrollments", "other"],
+        ["payments", "5", "receipt", "other"],
+      ]) {
+        expect(plan(segments, "PUT")).toMatchObject({ ok: false, status: 404 });
+      }
+    });
+
+    it("keeps the generic 3-segment rules for everything else", () => {
+      expect(plan(["payments", "5", "status"], "PATCH")).toMatchObject({
+        ok: true,
+      });
+      expect(plan(["students", "5"], "GET")).toMatchObject({ ok: true });
+    });
+  });
+
   it("only allowlists safe resource names", () => {
     for (const rule of Object.values(FORWARD_RULES)) {
       for (const name of Object.keys(rule.resources)) {

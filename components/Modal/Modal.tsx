@@ -16,7 +16,7 @@ const Modal = ({
   title: string;
   onClose: () => void;
   children: ReactNode;
-  size?: "sm" | "lg";
+  size?: "sm" | "lg" | "xl";
 }) => {
   const titleId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -105,7 +105,7 @@ const Modal = ({
         tabIndex={-1}
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className={`bg-white rounded-3xl w-full ${size === "sm" ? "max-w-md" : "max-w-lg"} overflow-hidden shadow-2xl focus:outline-none`}
+        className={`bg-white rounded-3xl w-full ${size === "sm" ? "max-w-md" : size === "xl" ? "max-w-5xl" : "max-w-lg"} overflow-hidden shadow-2xl focus:outline-none`}
       >
         <div className="p-6 border-b border-zinc-100 flex items-center justify-between">
           <h2 id={titleId} className="text-xl font-bold text-zinc-900">

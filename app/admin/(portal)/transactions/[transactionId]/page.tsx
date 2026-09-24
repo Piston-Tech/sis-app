@@ -4,7 +4,7 @@ import Card from "@/components/Card";
 import { Button, Input } from "@/components/Form";
 import cn from "@/utils/cn";
 import formatMoney from "@/utils/formatMoney";
-import { ArrowLeft, Plus, Save, Trash2 } from "lucide-react";
+import { ArrowLeft, Pencil, Plus, Save, Trash2, Upload } from "lucide-react";
 import { AnimatePresence } from "motion/react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -17,6 +17,8 @@ import { useFormState } from "@/hooks/admin/useFormState";
 import {
   TransactionDetail,
   TransactionEnrollment,
+  invoiceTotal,
+  payerCode,
   payerName,
 } from "@/hooks/admin/types";
 import { transactionUpdateSchema } from "@/components/admin/schemas";
@@ -26,6 +28,18 @@ import FormError from "@/components/admin/FormError";
 import PaymentFormModal from "@/components/admin/PaymentFormModal";
 import { useToast } from "@/components/admin/Toast";
 import { Payment } from "@/types";
+import { CopyableId } from "@/components/common/CopyButton";
+import {
+  InvoiceTotalModal,
+  PricingNotice,
+} from "@/components/admin/InvoicePricing";
+import {
+  ReceiptActions,
+  ReceiptStatus,
+  SendReceiptModal,
+} from "@/components/admin/Receipts";
+import { CompanyContactsModal } from "@/components/admin/CompanyContacts";
+import { BulkEnrollmentsModal } from "../BulkTransactionModal";
 
 const naira = (v: number | string | undefined) =>
   formatMoney(v ?? 0, true, "Nigerian Naira");
@@ -39,8 +53,10 @@ const toDate = (value: unknown): Date | null => {
 /** Discount + next payment date: PUT /admin/transactions/:id. */
 const TransactionDetailsForm = ({
   transaction,
+  onEditTotal,
 }: {
   transaction: TransactionDetail;
+  onEditTotal: () => void;
 }) => {
   const { canWrite } = useAdminGlobal();
   const toast = useToast();
@@ -62,8 +78,8 @@ const TransactionDetailsForm = ({
       nextPaymentDate: values.nextPaymentDate,
     });
     if (!parsed) return;
-    if (parsed.discount > Number(transaction.subTotal ?? 0)) {
-      form.setErrors({ discount: "Discount cannot exceed the subtotal" });
+    if (parsed.discount > invoiceTotal(transaction)) {
+      form.setErrors({ discount: "Discount cannot exceed the invoice total" });
       return;
     }
     try {
@@ -117,7 +133,23 @@ const TransactionDetailsForm = ({
             </span>
           </div>
         </div>
-        <Input disabled label="Subtotal" value={naira(transaction.subTotal)} />
+        <div>
+          <Input
+            disabled
+            label="Invoice Total"
+            value={naira(invoiceTotal(transaction))}
+          />
+          {canWrite && (
+            <button
+              type="button"
+              onClick={onEditTotal}
+              className="mt-1 inline-flex items-center gap-1 text-[11px] font-semibold text-zinc-600 hover:text-black hover:underline"
+            >
+              <Pencil size={12} aria-hidden="true" />
+              Edit invoice total
+            </button>
+          )}
+        </div>
         <Input
           label="Discount (₦)"
           type="number"
@@ -191,6 +223,12 @@ const SingleTransactionPage = () => {
   });
 
   const [showAddEnrollment, setShowAddEnrollment] = useState(false);
+  const [showBulkEnrollments, setShowBulkEnrollments] = useState(false);
+  const [editingTotal, setEditingTotal] = useState(false);
+  const [receiptFor, setReceiptFor] = useState<Payment | null>(null);
+  // Receipt flow -> company contacts -> back to the receipt dialog.
+  const [contactsOpen, setContactsOpen] = useState(false);
+  const [resumeReceipt, setResumeReceipt] = useState<Payment | null>(null);
   const [showAddPayment, setShowAddPayment] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<PendingDelete | null>(
     null,
@@ -231,7 +269,7 @@ const SingleTransactionPage = () => {
 
   return (
     <div className="max-w-5xl mx-auto space-y-8 pb-20">
-      <header className="flex items-center justify-between">
+      <header className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <Link
             href="/transactions"
@@ -244,9 +282,22 @@ const SingleTransactionPage = () => {
             <h1 className="text-3xl font-bold text-zinc-900 tracking-tight">
               {canWrite ? "Edit Transaction" : "Transaction"}
             </h1>
-            <p className="text-zinc-500 mt-1">
-              Transaction #{transaction.transactionId} •{" "}
+            <p className="text-zinc-500 mt-1 flex flex-wrap items-center gap-x-1">
+              Transaction #
+              <CopyableId
+                value={transaction.transactionId}
+                label="transaction ID"
+                className="font-mono"
+              />
+              <span aria-hidden="true">•</span>
               {payerName(transaction.payerType, transaction.payer)}
+              <CopyableId
+                value={payerCode(transaction.payerType, transaction.payer)}
+                label={
+                  transaction.payerType === "B2B" ? "company ID" : "student ID"
+                }
+                className="font-mono text-xs text-zinc-400"
+              />
             </p>
           </div>
         </div>
@@ -264,10 +315,16 @@ const SingleTransactionPage = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-8">
+          <PricingNotice
+            transaction={transaction}
+            enrollmentCount={transaction.enrollments.length}
+          />
+
           <Card title="Transaction Details">
             <TransactionDetailsForm
               key={`${transaction.id}-${transaction.discount}-${transaction.nextPaymentDate ?? ""}`}
               transaction={transaction}
+              onEditTotal={() => setEditingTotal(true)}
             />
           </Card>
 
@@ -275,13 +332,23 @@ const SingleTransactionPage = () => {
             title="Linked Enrollments"
             action={
               canWrite ? (
-                <button
-                  type="button"
-                  onClick={() => setShowAddEnrollment(true)}
-                  className="flex items-center gap-2 text-xs font-bold text-black hover:underline"
-                >
-                  <Plus size={14} aria-hidden="true" /> Add Enrollment
-                </button>
+                <div className="flex flex-wrap items-center gap-4">
+                  <button
+                    type="button"
+                    onClick={() => setShowBulkEnrollments(true)}
+                    className="flex items-center gap-2 text-xs font-bold text-black hover:underline"
+                  >
+                    <Upload size={14} aria-hidden="true" /> Add enrollments in
+                    bulk
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowAddEnrollment(true)}
+                    className="flex items-center gap-2 text-xs font-bold text-black hover:underline"
+                  >
+                    <Plus size={14} aria-hidden="true" /> Add Enrollment
+                  </button>
+                </div>
               ) : undefined
             }
           >
@@ -289,9 +356,9 @@ const SingleTransactionPage = () => {
               {transaction.enrollments.map((e) => (
                 <li
                   key={e.id}
-                  className="flex items-center justify-between p-4 bg-zinc-50 border border-zinc-100 rounded-2xl"
+                  className="flex flex-wrap items-center justify-between gap-3 p-4 bg-zinc-50 border border-zinc-100 rounded-2xl"
                 >
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-4 min-w-0">
                     <div
                       aria-hidden="true"
                       className="w-10 h-10 rounded-full bg-white border border-zinc-100 flex items-center justify-center text-zinc-600 font-bold text-xs"
@@ -303,9 +370,29 @@ const SingleTransactionPage = () => {
                       <p className="text-sm font-bold text-zinc-900">
                         {e.student?.firstName} {e.student?.lastName}
                       </p>
-                      <p className="text-xs text-zinc-500">
-                        {e.class?.course?.code} • {e.tier?.name ?? "Standard"} •{" "}
+                      <p className="text-xs text-zinc-500 flex flex-wrap items-center gap-x-1">
+                        <CopyableId
+                          value={e.class?.course?.code}
+                          label={`course code ${e.class?.course?.code ?? ""}`}
+                        />
+                        <span aria-hidden="true">•</span>
+                        {e.tier?.name ?? "Standard"}
+                        <span aria-hidden="true">•</span>
                         {e.class?.schedule}
+                      </p>
+                      <p className="text-[10px] text-zinc-400 font-mono flex flex-wrap items-center gap-x-2">
+                        <CopyableId
+                          value={e.enrollmentId}
+                          label={`enrollment ID ${e.enrollmentId}`}
+                        />
+                        <CopyableId
+                          value={e.student?.studentId}
+                          label={`student ID ${e.student?.studentId ?? ""}`}
+                        />
+                        <CopyableId
+                          value={e.class?.classId}
+                          label={`class ID ${e.class?.classId ?? ""}`}
+                        />
                       </p>
                     </div>
                   </div>
@@ -344,6 +431,20 @@ const SingleTransactionPage = () => {
           <Card title="Financial Summary">
             <dl className="space-y-4">
               <div className="flex justify-between items-center">
+                <dt className="text-sm text-zinc-500">Invoice Total</dt>
+                <dd className="text-sm font-bold text-zinc-900">
+                  {naira(invoiceTotal(transaction))}
+                </dd>
+              </div>
+              <div className="flex justify-between items-center">
+                <dt className="text-sm text-zinc-500">Discount</dt>
+                <dd className="text-sm font-bold text-zinc-900">
+                  {Number(transaction.discount) > 0
+                    ? `- ${naira(transaction.discount)}`
+                    : naira(0)}
+                </dd>
+              </div>
+              <div className="flex justify-between items-center">
                 <dt className="text-sm text-zinc-500">Total Due</dt>
                 <dd className="text-sm font-bold text-zinc-900">
                   {naira(transaction.totalDue)}
@@ -373,9 +474,16 @@ const SingleTransactionPage = () => {
                     className="p-3 bg-zinc-50 border border-zinc-100 rounded-xl space-y-2"
                   >
                     <div className="flex items-center justify-between">
-                      <p className="text-sm font-bold text-zinc-900">
-                        {naira(p.amountPaid)}
-                      </p>
+                      <div>
+                        <p className="text-sm font-bold text-zinc-900">
+                          {naira(p.amountPaid)}
+                        </p>
+                        <CopyableId
+                          value={p.paymentId}
+                          label={`payment ID ${p.paymentId}`}
+                          className="text-[10px] text-zinc-400 font-mono"
+                        />
+                      </div>
                       {canWrite && (
                         <button
                           type="button"
@@ -408,6 +516,15 @@ const SingleTransactionPage = () => {
                         {p.status}
                       </span>
                     </div>
+                    {p.status === "RECEIVED" && (
+                      <div className="pt-2 border-t border-zinc-100 space-y-2">
+                        <ReceiptStatus payment={p} compact />
+                        <ReceiptActions
+                          payment={p}
+                          onSend={() => setReceiptFor(p)}
+                        />
+                      </div>
+                    )}
                   </li>
                 ))}
               </ul>
@@ -441,6 +558,65 @@ const SingleTransactionPage = () => {
               transaction.payerType === "B2C" ? transaction.payerId : undefined
             }
             close={() => setShowAddEnrollment(false)}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showBulkEnrollments && (
+          <BulkEnrollmentsModal
+            transaction={{
+              id: transaction.id,
+              transactionId: transaction.transactionId,
+              total: invoiceTotal(transaction),
+            }}
+            onClose={() => setShowBulkEnrollments(false)}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {editingTotal && (
+          <InvoiceTotalModal
+            transaction={transaction}
+            onClose={() => setEditingTotal(false)}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {receiptFor && (
+          <SendReceiptModal
+            payment={receiptFor}
+            onManageContacts={
+              transaction.payerType === "B2B"
+                ? () => {
+                    setResumeReceipt(receiptFor);
+                    setReceiptFor(null);
+                    setContactsOpen(true);
+                  }
+                : undefined
+            }
+            onClose={() => setReceiptFor(null)}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {contactsOpen && transaction.payerType === "B2B" && (
+          <CompanyContactsModal
+            companyId={transaction.payerId}
+            companyName={transaction.payer?.name}
+            onClose={() => {
+              setContactsOpen(false);
+              if (resumeReceipt) {
+                setReceiptFor(
+                  transaction.payments.find((p) => p.id === resumeReceipt.id) ??
+                    resumeReceipt,
+                );
+                setResumeReceipt(null);
+              }
+            }}
           />
         )}
       </AnimatePresence>

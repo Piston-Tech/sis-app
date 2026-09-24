@@ -1,16 +1,23 @@
 "use client";
 
 import Card from "@/components/Card";
-import { FileText } from "lucide-react";
+import { FileText, Upload } from "lucide-react";
 import { AnimatePresence } from "motion/react";
 import { useState } from "react";
 import Link from "next/link";
 import TransactionFormModal from "./TransactionFormModal";
+import { BulkTransactionModal } from "./BulkTransactionModal";
+import { CopyableId } from "@/components/common/CopyButton";
 import cn from "@/utils/cn";
 import formatMoney from "@/utils/formatMoney";
 import { useResourceList } from "@/hooks/admin/useResourceList";
 import { useTableState } from "@/hooks/admin/useTableState";
-import { TransactionSummary, payerCode, payerName } from "@/hooks/admin/types";
+import {
+  TransactionSummary,
+  invoiceTotal,
+  payerCode,
+  payerName,
+} from "@/hooks/admin/types";
 import { useAdminGlobal } from "@/app/AdminProvider";
 import PageHeader from "@/components/admin/PageHeader";
 import TableToolbar from "@/components/admin/TableToolbar";
@@ -34,6 +41,7 @@ const AdminTransactions = () => {
       order: "desc",
     });
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showBulkModal, setShowBulkModal] = useState(false);
 
   const exportCsv = () =>
     downloadCsv(`transactions-page-${page}`, items, [
@@ -46,6 +54,8 @@ const AdminTransactions = () => {
       { header: "Payer", value: (t) => payerName(t.payerType, t.payer) },
       { header: "Payer ID", value: (t) => payerCode(t.payerType, t.payer) },
       { header: "Enrollments", value: (t) => t.noOfEnrollments ?? 0 },
+      { header: "Invoice Total (NGN)", value: (t) => invoiceTotal(t) },
+      { header: "Discount (NGN)", value: (t) => t.discount },
       { header: "Total Due (NGN)", value: (t) => t.totalDue },
       { header: "Paid (NGN)", value: (t) => t.totalPaid },
       { header: "Balance (NGN)", value: (t) => t.balance },
@@ -59,7 +69,18 @@ const AdminTransactions = () => {
         description="Invoices, enrollments and balances."
         addLabel={canWrite ? "Add Transaction" : undefined}
         onAdd={() => setShowAddModal(true)}
-      />
+      >
+        {canWrite && (
+          <button
+            type="button"
+            onClick={() => setShowBulkModal(true)}
+            className="border border-zinc-200 bg-white px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 hover:bg-zinc-50 transition-colors"
+          >
+            <Upload size={18} aria-hidden="true" />
+            Bulk upload
+          </button>
+        )}
+      </PageHeader>
 
       <Card className="p-0">
         <TableToolbar
@@ -75,7 +96,7 @@ const AdminTransactions = () => {
             <thead>
               <tr className="bg-zinc-50/50">
                 <th scope="col" className={th}>
-                  Date
+                  Transaction
                 </th>
                 <th scope="col" className={th}>
                   Payer
@@ -84,7 +105,7 @@ const AdminTransactions = () => {
                   Students
                 </th>
                 <th scope="col" className={th}>
-                  Total Due
+                  Invoice Total
                 </th>
                 <th scope="col" className={th}>
                   Paid
@@ -106,24 +127,40 @@ const AdminTransactions = () => {
                   key={t.id}
                   className="hover:bg-zinc-50/50 transition-colors"
                 >
-                  <td className="px-6 py-4 text-sm text-zinc-600">
-                    {new Date(t.createdAt).toLocaleDateString()}
+                  <td className="px-6 py-4">
+                    <CopyableId
+                      value={t.transactionId}
+                      label={`transaction ID ${t.transactionId}`}
+                      className="text-xs font-mono font-semibold text-zinc-800"
+                    />
+                    <p className="text-xs text-zinc-500">
+                      {new Date(t.createdAt).toLocaleDateString()}
+                    </p>
                   </td>
                   <td className="px-6 py-4">
                     <p className="text-sm font-semibold text-zinc-900">
                       {payerName(t.payerType, t.payer)}
                     </p>
-                    <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">
-                      {payerCode(t.payerType, t.payer)}
-                    </p>
+                    <CopyableId
+                      value={payerCode(t.payerType, t.payer)}
+                      label={`${t.payerType === "B2B" ? "company" : "student"} ID ${payerCode(t.payerType, t.payer)}`}
+                      className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider"
+                    />
                   </td>
                   <td className="px-6 py-4 text-center">
                     <span className="text-sm font-medium text-zinc-600 bg-zinc-100 px-2 py-1 rounded-lg">
                       {t.noOfEnrollments || 0}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-sm font-semibold text-zinc-900">
-                    {naira(t.totalDue)}
+                  <td className="px-6 py-4">
+                    <p className="text-sm font-semibold text-zinc-900">
+                      {naira(invoiceTotal(t))}
+                    </p>
+                    {Number(t.discount) > 0 && (
+                      <p className="text-[10px] text-zinc-500">
+                        - {naira(t.discount)} discount = {naira(t.totalDue)}
+                      </p>
+                    )}
                   </td>
                   <td className="px-6 py-4 text-sm text-emerald-600 font-semibold">
                     {naira(t.totalPaid)}
@@ -185,6 +222,12 @@ const AdminTransactions = () => {
       <AnimatePresence>
         {showAddModal && (
           <TransactionFormModal onClose={() => setShowAddModal(false)} />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showBulkModal && (
+          <BulkTransactionModal onClose={() => setShowBulkModal(false)} />
         )}
       </AnimatePresence>
     </div>

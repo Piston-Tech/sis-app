@@ -14,6 +14,7 @@ import Session from "./Session";
 import Tier from "./Tier";
 import SelectedClassSearch from "./SelectedClassSearch";
 import Payment from "./Payment";
+import CompanyContact, { BillingContactSummary } from "./CompanyContact";
 import type {
   ApiError,
   ApiResponse,
@@ -291,6 +292,8 @@ export type {
   Tier,
   SelectedClassSearch,
   Payment,
+  CompanyContact,
+  BillingContactSummary,
   ApiError,
   ApiResponse,
   ApiSuccess,

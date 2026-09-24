@@ -7,6 +7,8 @@ import { useAdminGlobal } from "@/app/AdminProvider";
 import { useFormState } from "@/hooks/admin/useFormState";
 import { useResourceMutation } from "@/hooks/admin/useResourceMutation";
 import { Company } from "@/types";
+import { CopyableId } from "@/components/common/CopyButton";
+import CompanyContacts from "@/components/admin/CompanyContacts";
 
 const INDUSTRIES = ["IT", "Education", "Oil & Gas"];
 
@@ -63,6 +65,16 @@ const CompanyFormModal = ({
       }
       onClose={onClose}
     >
+      {company?.companyId && (
+        <p className="mb-4 text-xs text-zinc-500">
+          Company ID:{" "}
+          <CopyableId
+            value={company.companyId}
+            label="company ID"
+            className="font-mono font-semibold text-zinc-700"
+          />
+        </p>
+      )}
       <form onSubmit={handleSubmit} noValidate className="space-y-4">
         <FormError message={formError} />
         <fieldset disabled={!canWrite} className="space-y-4">
@@ -90,6 +102,12 @@ const CompanyFormModal = ({
           </Button>
         )}
       </form>
+      {/* Outside the company form: the contact editor has its own form. */}
+      {company && (
+        <div className="mt-8 pt-6 border-t border-zinc-100">
+          <CompanyContacts companyId={company.id} />
+        </div>
+      )}
     </Modal>
   );
 };

@@ -49,6 +49,7 @@ const STATUS_MESSAGES: Record<number, string> = {
   404: "The requested record was not found.",
   409: "This record has dependent records and cannot be changed or deleted.",
   429: "Too many requests. Please wait a moment and try again.",
+  502: "An upstream service failed. Please try again.",
 };
 
 /** Converts anything thrown by axios / the API into an ApiError. */
@@ -120,16 +121,23 @@ export const buildQuery = (params: Record<string, QueryValue>) => {
   return qs ? `?${qs}` : "";
 };
 
+export interface AdminRequestOptions {
+  /** Request timeout in ms (default: the apiClient default, 10s). */
+  timeout?: number;
+}
+
 export const adminRequest = async <T = unknown>(
   method: "get" | "post" | "put" | "patch" | "delete",
   url: string,
   body?: unknown,
+  options: AdminRequestOptions = {},
 ): Promise<{ data: T; message?: string; pagination?: Pagination }> => {
+  const config = options.timeout ? { timeout: options.timeout } : undefined;
   try {
     const response =
       method === "get" || method === "delete"
-        ? await apiClient[method](url)
-        : await apiClient[method](url, body ?? {});
+        ? await apiClient[method](url, config)
+        : await apiClient[method](url, body ?? {}, config);
     return unwrap(response.data) as {
       data: T;
       message?: string;
@@ -152,6 +160,12 @@ export const adminKeys = {
     ["admin", resource, "search", q] as const,
   byId: (resource: AdminResource, id: string | number) =>
     ["admin", resource, "byId", String(id)] as const,
+  /** Nested under "companies" so company invalidation refreshes contacts. */
+  companyContacts: (companyId: string | number) =>
+    ["admin", "companies", "contacts", String(companyId)] as const,
+  /** Nested under "payments" so payment invalidation refreshes previews. */
+  receiptPreview: (paymentId: string | number) =>
+    ["admin", "payments", "receipt-preview", String(paymentId)] as const,
 };
 
 export const MAX_LIMIT = 100;

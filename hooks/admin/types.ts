@@ -16,11 +16,20 @@ export interface TransactionSummary {
   transactionId: string;
   payerType: string;
   payerId: number;
+  /** Stored invoice total: THE source of truth for what is owed. */
+  total?: number;
   discount: number;
   noOfEnrollments: number;
-  subTotal: number;
+  /** Legacy (pre-stored-total) live price; prefer `total`. */
+  subTotal?: number;
   totalPaid: number;
+  /** total - discount */
   totalDue: number;
+  /** Price-list price of the current enrollments (informational only). */
+  computedTotal?: number;
+  /** computedTotal - total */
+  priceDifference?: number;
+  currency?: string;
   payer: PayerSummary | null;
   balance: number;
   status: string;
@@ -94,3 +103,7 @@ export const payerCode = (
   payerType: string | undefined,
   payer: PayerSummary | null | undefined,
 ) => (payerType === "B2B" ? payer?.companyId : payer?.studentId) ?? "";
+
+/** Stored invoice total, falling back to the legacy subTotal. */
+export const invoiceTotal = (t: Pick<TransactionSummary, "total" | "subTotal">) =>
+  Number(t.total ?? t.subTotal ?? 0);

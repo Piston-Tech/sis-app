@@ -29,6 +29,19 @@ interface ResourceRule {
    * (the admin forms PUT to e.g. /api/admin/classes with the id in the body).
    */
   collectionDepth?: number;
+  /**
+   * Explicit sub-routes below the resource (patterns exclude the resource
+   * name). `:id` matches one SAFE_SEGMENT; anything else must match
+   * literally (so e.g. `receipt.pdf` is allowed only exactly there). A
+   * matching sub-route decides the allowed methods and may be deeper than
+   * the audience's maxSegments.
+   */
+  subRoutes?: readonly SubRoute[];
+}
+
+interface SubRoute {
+  pattern: readonly string[];
+  methods: readonly HttpMethod[];
 }
 
 interface AudienceRule {
@@ -74,15 +87,44 @@ export const FORWARD_RULES: Readonly<Record<Audience, AudienceRule>> = {
     token: "admin",
     maxSegments: 3,
     resources: {
-      students: { methods: CRUD },
-      companies: { methods: CRUD },
+      students: {
+        methods: CRUD,
+        // POST /admin/students/bulk
+        subRoutes: [{ pattern: ["bulk"], methods: ["POST"] }],
+      },
+      companies: {
+        methods: CRUD,
+        subRoutes: [
+          // /admin/companies/:id/contacts[/:contactId]
+          { pattern: [":id", "contacts"], methods: ["GET", "POST"] },
+          { pattern: [":id", "contacts", ":id"], methods: ["PUT", "DELETE"] },
+        ],
+      },
       courses: { methods: CRUD },
       classes: { methods: CRUD },
       tiers: { methods: CRUD },
-      transactions: { methods: CRUD },
+      transactions: {
+        methods: CRUD,
+        subRoutes: [
+          // POST /admin/transactions/bulk
+          { pattern: ["bulk"], methods: ["POST"] },
+          // POST /admin/transactions/:id/enrollments/bulk
+          { pattern: [":id", "enrollments", "bulk"], methods: ["POST"] },
+        ],
+      },
       enrollments: { methods: CRUD },
       // PATCH /admin/payments/:id/status
-      payments: { methods: ["GET", "POST", "PUT", "PATCH", "DELETE"] },
+      payments: {
+        methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+        subRoutes: [
+          // POST /admin/payments/:id/receipt (send)
+          { pattern: [":id", "receipt"], methods: ["POST"] },
+          // GET /admin/payments/:id/receipt/preview
+          { pattern: [":id", "receipt", "preview"], methods: ["GET"] },
+          // GET /admin/payments/:id/receipt.pdf (binary passthrough)
+          { pattern: [":id", "receipt.pdf"], methods: ["GET"] },
+        ],
+      },
       // /foundation/{programs,cohorts,applications}[/:id]
       foundation: {
         methods: ["GET", "POST", "PUT", "PATCH"],
@@ -96,6 +138,20 @@ export const SAFE_SEGMENT = /^[A-Za-z0-9_-]+$/;
 
 export const isSafeSegment = (segment: unknown): segment is string =>
   typeof segment === "string" && SAFE_SEGMENT.test(segment);
+
+const ID_TOKEN = ":id";
+
+const matchesSubRoute = (
+  pattern: readonly string[],
+  rest: readonly string[],
+) =>
+  pattern.length === rest.length &&
+  pattern.every((part, i) =>
+    part === ID_TOKEN ? isSafeSegment(rest[i]) : part === rest[i],
+  );
+
+const findSubRoute = (rule: ResourceRule, rest: readonly string[]) =>
+  rule.subRoutes?.find((route) => matchesSubRoute(route.pattern, rest));
 
 export const tokenFor = (audience: Audience): AuthAudience | null =>
   FORWARD_RULES[audience].token;
@@ -134,24 +190,29 @@ export const planForward = ({
   const rule = FORWARD_RULES[audience];
   const notFound = { ok: false, status: 404, error: "Not found" } as const;
 
-  if (
-    !segments.length ||
-    segments.length > rule.maxSegments ||
-    !segments.every(isSafeSegment)
-  ) {
-    return notFound;
-  }
+  if (!segments.length || !isSafeSegment(segments[0])) return notFound;
 
   const resource = rule.resources[segments[0]];
   // Own-property check so "constructor"/"__proto__" etc. never match
   if (!resource || !Object.hasOwn(rule.resources, segments[0])) return notFound;
 
-  if (!resource.methods.includes(method)) {
+  // An explicit sub-route wins (it may be deeper or contain a literal like
+  // "receipt.pdf"); otherwise the generic depth + safe-segment rules apply.
+  const subRoute = findSubRoute(resource, segments.slice(1));
+  if (
+    !subRoute &&
+    (segments.length > rule.maxSegments || !segments.every(isSafeSegment))
+  ) {
+    return notFound;
+  }
+
+  const methods = subRoute?.methods ?? resource.methods;
+  if (!methods.includes(method)) {
     return {
       ok: false,
       status: 405,
       error: "Method not allowed",
-      allow: resource.methods.join(", "),
+      allow: methods.join(", "),
     };
   }
 

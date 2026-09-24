@@ -8,6 +8,7 @@ import {
   TextArea,
 } from "@/components/Form";
 import Modal from "@/components/Modal";
+import { CopyableId } from "@/components/common/CopyButton";
 import FormError from "@/components/admin/FormError";
 import { useToast } from "@/components/admin/Toast";
 import { useAdminGlobal } from "@/app/AdminProvider";
@@ -49,6 +50,28 @@ const ClassFormModal = ({
       }
       onClose={onClose}
     >
+      {data?.classId && (
+        <p className="mb-4 text-xs text-zinc-500 flex flex-wrap items-center gap-x-3">
+          <span>
+            Class ID:{" "}
+            <CopyableId
+              value={data.classId}
+              label="class ID"
+              className="font-mono font-semibold text-zinc-700"
+            />
+          </span>
+          {data.course?.code && (
+            <span>
+              Course:{" "}
+              <CopyableId
+                value={data.course.code}
+                label="course code"
+                className="font-mono font-semibold text-zinc-700"
+              />
+            </span>
+          )}
+        </p>
+      )}
       <form
         onSubmit={canWrite ? handleSubmit : (e) => e.preventDefault()}
         noValidate

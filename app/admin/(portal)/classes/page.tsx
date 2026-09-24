@@ -18,6 +18,7 @@ import Pagination from "@/components/admin/Pagination";
 import ConfirmDialog from "@/components/admin/ConfirmDialog";
 import { useToast } from "@/components/admin/Toast";
 import { downloadCsv } from "@/components/admin/csv";
+import { CopyableId } from "@/components/common/CopyButton";
 
 const PAGE_SIZE = 24;
 
@@ -120,9 +121,11 @@ const ClassesList = () => {
               <li key={cls.id}>
                 <Card className="hover:shadow-md transition-shadow h-full">
                   <div className="flex items-start justify-between mb-4">
-                    <div className="px-2 py-1 rounded bg-zinc-100 text-[10px] font-bold text-zinc-600 uppercase tracking-wider">
-                      {cls.course?.code}
-                    </div>
+                    <CopyableId
+                      value={cls.course?.code}
+                      label={`course code ${cls.course?.code ?? ""}`}
+                      className="px-2 py-1 rounded bg-zinc-100 text-[10px] font-bold text-zinc-600 uppercase tracking-wider"
+                    />
                     {cls.isCustom && (
                       <span className="px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider bg-amber-50 text-amber-700">
                         Custom
@@ -132,6 +135,11 @@ const ClassesList = () => {
                   <h3 className="font-bold text-zinc-900 mb-2">
                     {classLabel(cls)}
                   </h3>
+                  <CopyableId
+                    value={cls.classId}
+                    label={`class ID ${cls.classId}`}
+                    className="mb-2 text-[10px] font-mono text-zinc-500"
+                  />
                   <div className="space-y-2 mb-6">
                     <div className="flex items-center gap-2 text-xs text-zinc-500">
                       <Calendar size={14} aria-hidden="true" />

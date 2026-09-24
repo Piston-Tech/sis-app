@@ -8,6 +8,7 @@ import { useFormState } from "@/hooks/admin/useFormState";
 import { useResourceMutation } from "@/hooks/admin/useResourceMutation";
 import { Student } from "@/types";
 import { PERSONAS } from "@/constants/profile";
+import { CopyableId } from "@/components/common/CopyButton";
 
 // Stored values are the persona codes the student onboarding writes
 const PERSONA_OPTIONS = PERSONAS.map(({ value, label }) => ({ value, title: label }));
@@ -81,6 +82,16 @@ const StudentFormModal = ({
       }
       onClose={onClose}
     >
+      {student?.studentId && (
+        <p className="mb-4 text-xs text-zinc-500">
+          Student ID:{" "}
+          <CopyableId
+            value={student.studentId}
+            label="student ID"
+            className="font-mono font-semibold text-zinc-700"
+          />
+        </p>
+      )}
       <form onSubmit={handleSubmit} noValidate className="space-y-4">
         <FormError message={formError} />
         <fieldset disabled={!canWrite} className="space-y-4">

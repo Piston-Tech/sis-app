@@ -1,10 +1,12 @@
 "use client";
 
 import Card from "@/components/Card";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Upload } from "lucide-react";
 import { AnimatePresence } from "motion/react";
 import { useState } from "react";
 import StudentFormModal from "./StudentFormModal";
+import BulkStudentsModal from "./BulkStudentsModal";
+import { CopyableId } from "@/components/common/CopyButton";
 import { Student } from "@/types";
 import { useResourceList } from "@/hooks/admin/useResourceList";
 import { useTableState } from "@/hooks/admin/useTableState";
@@ -34,6 +36,7 @@ const AdminStudents = () => {
 
   // undefined = closed, null = add, Student = edit/view
   const [editing, setEditing] = useState<StudentRow | null | undefined>();
+  const [showBulk, setShowBulk] = useState(false);
 
   const fullName = (s: StudentRow) =>
     [s.firstName, s.lastName].filter(Boolean).join(" ");
@@ -59,7 +62,18 @@ const AdminStudents = () => {
         description="Manage your student directory and profiles."
         addLabel={canWrite ? "Add Student" : undefined}
         onAdd={() => setEditing(null)}
-      />
+      >
+        {canWrite && (
+          <button
+            type="button"
+            onClick={() => setShowBulk(true)}
+            className="border border-zinc-200 bg-white px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 hover:bg-zinc-50 transition-colors"
+          >
+            <Upload size={18} aria-hidden="true" />
+            Bulk upload
+          </button>
+        )}
+      </PageHeader>
 
       <Card className="p-0">
         <div>
@@ -111,9 +125,11 @@ const AdminStudents = () => {
                           <p className="text-sm font-semibold text-zinc-900">
                             {fullName(student)}
                           </p>
-                          <p className="text-[10px] text-zinc-400 font-mono uppercase">
-                            {student.studentId}
-                          </p>
+                          <CopyableId
+                            value={student.studentId}
+                            label={`student ID ${student.studentId}`}
+                            className="text-[10px] text-zinc-400 font-mono uppercase"
+                          />
                         </div>
                       </div>
                     </td>
@@ -128,6 +144,11 @@ const AdminStudents = () => {
                             ? `#${student.companyId}`
                             : "Individual")}
                       </p>
+                      <CopyableId
+                        value={student.company?.companyId}
+                        label={`company ID ${student.company?.companyId ?? ""}`}
+                        className="text-[10px] text-zinc-400 font-mono uppercase"
+                      />
                     </td>
                     <td className="px-6 py-4">
                       <span className="inline-flex items-center px-2 py-1 rounded-md bg-zinc-100 text-zinc-700 text-[10px] font-bold uppercase">
@@ -181,6 +202,10 @@ const AdminStudents = () => {
             onClose={() => setEditing(undefined)}
           />
         )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showBulk && <BulkStudentsModal onClose={() => setShowBulk(false)} />}
       </AnimatePresence>
     </div>
   );

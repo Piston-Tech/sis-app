@@ -1,5 +1,6 @@
 "use client";
 
+import { CopyableId } from "@/components/common/CopyButton";
 import Card from "@/components/Card";
 import { ChevronRight, BookOpen, ExternalLink } from "lucide-react";
 import { AnimatePresence } from "motion/react";
@@ -98,9 +99,11 @@ const AdminCourses = () => {
                         <p className="text-sm font-semibold text-zinc-900">
                           {course.title}
                         </p>
-                        <span className="text-xs text-zinc-600">
-                          {course.code}
-                        </span>
+                        <CopyableId
+                          value={course.code}
+                          label={`course code ${course.code}`}
+                          className="text-xs text-zinc-600"
+                        />
                       </div>
                     </div>
                   </td>

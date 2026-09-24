@@ -25,6 +25,13 @@ import ConfirmDialog from "@/components/admin/ConfirmDialog";
 import PaymentFormModal from "@/components/admin/PaymentFormModal";
 import { useToast } from "@/components/admin/Toast";
 import { downloadCsv } from "@/components/admin/csv";
+import CopyButton, { CopyableId } from "@/components/common/CopyButton";
+import {
+  ReceiptActions,
+  ReceiptStatus,
+  SendReceiptModal,
+} from "@/components/admin/Receipts";
+import { CompanyContactsModal } from "@/components/admin/CompanyContacts";
 
 const th = "px-6 py-4 text-xs font-bold text-zinc-500 uppercase tracking-wider";
 
@@ -69,6 +76,9 @@ const AdminPayments = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [toDecline, setToDecline] = useState<PaymentRow | null>(null);
   const [pendingId, setPendingId] = useState<number | null>(null);
+  const [receiptFor, setReceiptFor] = useState<PaymentRow | null>(null);
+  // Receipt flow -> company contacts -> back to the receipt dialog.
+  const [contactsFor, setContactsFor] = useState<PaymentRow | null>(null);
 
   const changeStatus = async (payment: PaymentRow, next: PaymentStatus) => {
     setPendingId(payment.id);
@@ -105,6 +115,14 @@ const AdminPayments = () => {
       { header: "Amount (NGN)", value: (p) => p.amountPaid },
       { header: "Method", value: (p) => p.method },
       { header: "Status", value: (p) => p.status },
+      { header: "Receipt No", value: (p) => p.receiptNo },
+      { header: "Receipt Sent", value: (p) => (p.receiptSent ? "Yes" : "No") },
+      { header: "Receipt Sent To", value: (p) => p.receiptSentTo },
+      {
+        header: "Receipt Sent At",
+        value: (p) =>
+          p.receiptSentAt ? new Date(p.receiptSentAt).toISOString() : "",
+      },
     ]);
 
   return (
@@ -167,6 +185,9 @@ const AdminPayments = () => {
                 <th scope="col" className={th}>
                   Status
                 </th>
+                <th scope="col" className={th}>
+                  Receipt
+                </th>
                 <th scope="col" className={`${th} text-right`}>
                   Actions
                 </th>
@@ -184,6 +205,11 @@ const AdminPayments = () => {
                       {new Date(
                         p.paymentDate ?? p.createdAt,
                       ).toLocaleDateString()}
+                      <CopyableId
+                        value={p.paymentId}
+                        label={`payment ID ${p.paymentId}`}
+                        className="block text-[10px] text-zinc-400 font-mono"
+                      />
                     </td>
                     <td className="px-6 py-4">
                       <p className="text-sm font-semibold text-zinc-900">
@@ -192,21 +218,30 @@ const AdminPayments = () => {
                           p.transaction?.payer,
                         )}
                       </p>
-                      <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">
-                        {payerCode(
+                      <CopyableId
+                        value={payerCode(
                           p.transaction?.payerType,
                           p.transaction?.payer,
                         )}
-                      </p>
+                        label={`${p.transaction?.payerType === "B2B" ? "company" : "student"} ID`}
+                        className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider"
+                      />
                     </td>
                     <td className="px-6 py-4 text-center">
                       {p.transaction ? (
-                        <Link
-                          href={`/transactions/${encodeURIComponent(p.transaction.transactionId)}`}
-                          className="text-sm font-medium text-zinc-600 bg-zinc-100 px-2 py-1 rounded-lg hover:underline"
-                        >
-                          {p.transaction.transactionId}
-                        </Link>
+                        <span className="inline-flex items-center gap-0.5">
+                          <Link
+                            href={`/transactions/${encodeURIComponent(p.transaction.transactionId)}`}
+                            className="text-sm font-medium text-zinc-600 bg-zinc-100 px-2 py-1 rounded-lg hover:underline"
+                          >
+                            {p.transaction.transactionId}
+                          </Link>
+                          <CopyButton
+                            value={p.transaction.transactionId}
+                            label={`transaction ID ${p.transaction.transactionId}`}
+                            size={12}
+                          />
+                        </span>
                       ) : (
                         "-"
                       )}
@@ -223,6 +258,19 @@ const AdminPayments = () => {
                       >
                         {p.status}
                       </span>
+                    </td>
+                    <td className="px-6 py-4 min-w-44">
+                      {p.status === "RECEIVED" ? (
+                        <div className="space-y-2">
+                          <ReceiptStatus payment={p} compact />
+                          <ReceiptActions
+                            payment={p}
+                            onSend={() => setReceiptFor(p)}
+                          />
+                        </div>
+                      ) : (
+                        <span className="text-xs text-zinc-400">-</span>
+                      )}
                     </td>
                     <td className="px-6 py-4 text-right">
                       {canWrite && p.status === "PENDING" ? (
@@ -268,7 +316,7 @@ const AdminPayments = () => {
                 );
               })}
               <TableStatusRow
-                colSpan={6}
+                colSpan={7}
                 isLoading={isLoading}
                 error={error}
                 isEmpty={items.length === 0}
@@ -296,6 +344,38 @@ const AdminPayments = () => {
       <AnimatePresence>
         {showAddModal && (
           <PaymentFormModal onClose={() => setShowAddModal(false)} />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {receiptFor && (
+          <SendReceiptModal
+            payment={receiptFor}
+            onManageContacts={
+              receiptFor.transaction?.payerType === "B2B"
+                ? () => {
+                    setContactsFor(receiptFor);
+                    setReceiptFor(null);
+                  }
+                : undefined
+            }
+            onClose={() => setReceiptFor(null)}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {contactsFor?.transaction && (
+          <CompanyContactsModal
+            companyId={contactsFor.transaction.payerId}
+            companyName={contactsFor.transaction.payer?.name}
+            onClose={() => {
+              const resume =
+                items.find((row) => row.id === contactsFor.id) ?? contactsFor;
+              setContactsFor(null);
+              setReceiptFor(resume);
+            }}
+          />
         )}
       </AnimatePresence>
 

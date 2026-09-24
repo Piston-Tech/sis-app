@@ -1,7 +1,7 @@
 "use client";
 
 import Card from "@/components/Card";
-import { ChevronRight, Building2 } from "lucide-react";
+import { AlertTriangle, ChevronRight, Building2 } from "lucide-react";
 import { AnimatePresence } from "motion/react";
 import { useState } from "react";
 import CompanyFormModal from "./CompanyFormModal";
@@ -14,6 +14,7 @@ import TableToolbar from "@/components/admin/TableToolbar";
 import TableStatusRow from "@/components/admin/TableStatusRow";
 import Pagination from "@/components/admin/Pagination";
 import { downloadCsv } from "@/components/admin/csv";
+import { CopyableId } from "@/components/common/CopyButton";
 
 const th = "px-6 py-4 text-xs font-bold text-zinc-500 uppercase tracking-wider";
 
@@ -35,6 +36,8 @@ const AdminCompanies = () => {
       { header: "Company ID", value: (c) => c.companyId },
       { header: "Name", value: (c) => c.name },
       { header: "Industry", value: (c) => c.industry },
+      { header: "Billing Contact", value: (c) => c.billingContact?.name },
+      { header: "Billing Email", value: (c) => c.billingContact?.email },
     ]);
 
   return (
@@ -68,6 +71,9 @@ const AdminCompanies = () => {
                 <th scope="col" className={th}>
                   Company ID
                 </th>
+                <th scope="col" className={th}>
+                  Billing Contact
+                </th>
                 <th scope="col" className={`${th} text-right`}>
                   Actions
                 </th>
@@ -96,9 +102,33 @@ const AdminCompanies = () => {
                     <p className="text-sm text-zinc-600">{company.industry}</p>
                   </td>
                   <td className="px-6 py-4">
-                    <p className="text-xs text-zinc-500 font-mono uppercase">
-                      {company.companyId}
-                    </p>
+                    <CopyableId
+                      value={company.companyId}
+                      label={`company ID ${company.companyId}`}
+                      className="text-xs text-zinc-500 font-mono uppercase"
+                    />
+                  </td>
+                  <td className="px-6 py-4">
+                    {company.billingContact ? (
+                      <div className="min-w-0">
+                        <p className="text-sm text-zinc-900">
+                          {company.billingContact.name}
+                        </p>
+                        <p className="text-xs text-zinc-500 break-all">
+                          {company.billingContact.email}
+                        </p>
+                      </div>
+                    ) : company.billingContact === null ? (
+                      <span
+                        className="inline-flex items-center gap-1 text-xs font-semibold text-amber-700"
+                        title="Add a billing contact so receipts can be emailed"
+                      >
+                        <AlertTriangle size={14} aria-hidden="true" />
+                        No billing contact
+                      </span>
+                    ) : (
+                      <span className="text-xs text-zinc-400">-</span>
+                    )}
                   </td>
                   <td className="px-6 py-4 text-right">
                     <button
@@ -113,7 +143,7 @@ const AdminCompanies = () => {
                 </tr>
               ))}
               <TableStatusRow
-                colSpan={4}
+                colSpan={5}
                 isLoading={isLoading}
                 error={error}
                 isEmpty={items.length === 0}

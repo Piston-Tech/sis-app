@@ -67,6 +67,63 @@ export const companySchema = z.object({
 });
 export type CompanyPayload = z.output<typeof companySchema>;
 
+const phoneText = optionalText.refine(
+  (v) => !v || /^[+\d][\d\s()-]{6,}$/.test(v),
+  { message: "Enter a valid phone number" },
+);
+
+export const companyContactSchema = z.object({
+  name: requiredText("Name"),
+  email: z.email("Enter a valid email address"),
+  phone: phoneText,
+  jobTitle: optionalText,
+  isBilling: z.boolean(),
+});
+export type CompanyContactPayload = z.output<typeof companyContactSchema>;
+
+/** Comma/semicolon/newline separated emails -> string[] (max 5, each valid). */
+export const ccListSchema = z
+  .string()
+  .optional()
+  .transform((v) =>
+    (v ?? "")
+      .split(/[,;\n]/)
+      .map((s) => s.trim())
+      .filter(Boolean),
+  )
+  .pipe(
+    z
+      .array(z.email("Each CC must be a valid email address"))
+      .max(5, "At most 5 CC addresses"),
+  );
+
+export const sendReceiptSchema = z.object({
+  to: z
+    .string()
+    .trim()
+    .optional()
+    .transform((v) => v || undefined)
+    .pipe(z.email("Enter a valid email address").optional()),
+  cc: ccListSchema,
+  receiptNo: z
+    .string()
+    .trim()
+    .optional()
+    .transform((v) => v || undefined)
+    .pipe(
+      z
+        .string()
+        .max(40, "Receipt number is too long")
+        .regex(/^[A-Za-z0-9/_-]+$/, "Use letters, numbers, - / _ only")
+        .optional(),
+    ),
+});
+export type SendReceiptPayload = z.output<typeof sendReceiptSchema>;
+
+export const invoiceTotalSchema = z.object({
+  total: money("Invoice total"),
+});
+
 export const courseSchema = z.object({
   title: requiredText("Title"),
   code: requiredText("Code"),
