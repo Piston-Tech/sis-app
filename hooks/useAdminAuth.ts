@@ -27,7 +27,8 @@ export function useAdminAuth() {
 
       if (data.success) {
         finalizeLogin(data.user);
-        router.push("/");
+        // A temporary password from a super admin must be replaced first
+        router.push(data.user?.mustChangePassword ? "/account" : "/");
       } else if (data.errors) {
         setErrors({ email: "", password: "", ...data.errors });
       } else {

@@ -20,14 +20,21 @@ export interface MutationResult<T> {
  */
 export function useAdminMutation<TVars, TData = unknown>(
   toRequest: (vars: TVars) => AdminMutationRequest,
-  { invalidate = [] }: { invalidate?: AdminResource[] } = {},
+  {
+    invalidate = [],
+    timeout,
+  }: {
+    invalidate?: AdminResource[];
+    /** Request timeout in ms, e.g. for endpoints that send email */
+    timeout?: number;
+  } = {},
 ) {
   const queryClient = useQueryClient();
 
   return useMutation<MutationResult<TData>, ApiError, TVars>({
     mutationFn: async (vars) => {
       const { method, url, body } = toRequest(vars);
-      const res = await adminRequest<TData>(method, url, body);
+      const res = await adminRequest<TData>(method, url, body, { timeout });
       return { data: res.data, message: res.message };
     },
     onSuccess: async () => {

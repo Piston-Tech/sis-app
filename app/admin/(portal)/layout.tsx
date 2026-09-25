@@ -2,8 +2,10 @@
 
 import { useAdminGlobal } from "@/app/AdminProvider";
 import AdminLayout from "@/components/AdminLayout";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
+
+const ACCOUNT_PATH = "/account";
 
 /** Authenticated admin shell, rendered once for every portal page. */
 export default function PortalLayout({
@@ -13,18 +15,28 @@ export default function PortalLayout({
 }) {
   const { currentUser, loading } = useAdminGlobal();
   const router = useRouter();
+  const pathname = usePathname() ?? "/";
+  // A temporary password from a super admin must be replaced before
+  // anything else (My account is the only page available until then)
+  const mustChangePassword =
+    !!currentUser?.mustChangePassword && pathname !== ACCOUNT_PATH;
 
   useEffect(() => {
     if (!loading && !currentUser) router.replace("/auth");
-  }, [loading, currentUser, router]);
+    else if (mustChangePassword) router.replace(ACCOUNT_PATH);
+  }, [loading, currentUser, mustChangePassword, router]);
 
-  if (loading || !currentUser) {
+  if (loading || !currentUser || mustChangePassword) {
     return (
       <div
         role="status"
         className="min-h-screen flex items-center justify-center text-zinc-500"
       >
-        {loading ? "Loading..." : "Redirecting to sign in..."}
+        {loading
+          ? "Loading..."
+          : mustChangePassword
+            ? "Redirecting to My account..."
+            : "Redirecting to sign in..."}
       </div>
     );
   }

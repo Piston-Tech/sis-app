@@ -255,3 +255,20 @@ export const paymentSchema = z.object({
   paymentDate: z.date().nullable().optional(),
 });
 export type PaymentPayload = z.output<typeof paymentSchema>;
+
+// Admin accounts (superadmin: app/admin/(portal)/admins)
+
+export const ACCESS_LEVELS = ["viewer", "admin", "superadmin"] as const;
+
+export const adminAccountSchema = z.object({
+  firstName: requiredText("First name"),
+  lastName: requiredText("Last name"),
+  email: z.email("Enter a valid email address").transform((v) => v.trim().toLowerCase()),
+  role: optionalText,
+  accessLevel: z.enum(ACCESS_LEVELS, { error: "Choose an access level" }),
+});
+
+export const adminProfileSchema = z.object({
+  firstName: requiredText("First name"),
+  lastName: requiredText("Last name"),
+});

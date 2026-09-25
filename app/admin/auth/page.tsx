@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { motion } from "motion/react";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
@@ -98,6 +99,14 @@ const AdminLogin = () => {
               placeholder="••••••••"
             />
             <ErrorMsg id="admin-password-error" message={errors.password} />
+            <p className="text-right">
+              <Link
+                href="/auth/forgot-password"
+                className="text-xs font-semibold text-zinc-500 hover:text-black"
+              >
+                Forgot password?
+              </Link>
+            </p>
           </div>
           <button
             type="submit"
