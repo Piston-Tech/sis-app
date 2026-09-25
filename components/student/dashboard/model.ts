@@ -4,6 +4,7 @@ import {
   isEnrollmentClosed,
   isSessionCompleted,
   isSessionUpcomingOrOngoing,
+  sessionStart,
   sortSessions,
 } from "../format";
 import type { DashboardResponse, StudentEnrollment, StudentSession } from "../types";
@@ -25,10 +26,25 @@ const sessionsFor = (data: DashboardResponse, enrollment: StudentEnrollment) =>
 export const buildDashboardModel = (data: DashboardResponse): DashboardModel => {
   const now = Date.now();
 
+  // The class whose next (or currently running) session comes soonest. The
+  // API lists enrollments newest first, so "the first one with anything
+  // upcoming" picked a class next month over one running today.
+  const soonest = data.enrollments
+    .map((enrollment) => ({
+      enrollment,
+      next: sessionsFor(data, enrollment).find((session) =>
+        isSessionUpcomingOrOngoing(session, now),
+      ),
+    }))
+    .filter((candidate) => candidate.next)
+    .sort(
+      (a, b) =>
+        (sessionStart(a.next!)?.getTime() ?? Infinity) -
+        (sessionStart(b.next!)?.getTime() ?? Infinity),
+    )[0];
+
   const activeEnrollment =
-    data.enrollments.find((enrollment) =>
-      sessionsFor(data, enrollment).some((session) => isSessionUpcomingOrOngoing(session, now)),
-    ) ??
+    soonest?.enrollment ??
     data.enrollments.find((enrollment) => !isEnrollmentClosed(enrollment)) ??
     null;
 
@@ -44,9 +60,10 @@ export const buildDashboardModel = (data: DashboardResponse): DashboardModel => 
     .join(" ");
 
   let billingEntity: string | null = null;
-  if (/company|corporate/.test(payerType)) {
+  // Payer types are stored as B2B (organisation) / B2C (individual)
+  if (/^b2b$|company|corporate/.test(payerType)) {
     billingEntity = data.student?.company?.name || "Your organisation";
-  } else if (/student|individual|self/.test(payerType)) {
+  } else if (/^b2c$|student|individual|self/.test(payerType)) {
     billingEntity = studentName || "You";
   }
 

@@ -5,6 +5,7 @@ import {
   courseTitle,
   formatDate,
   isSessionCompleted,
+  isSessionInProgress,
   isSessionUpcomingOrOngoing,
 } from "../format";
 import type { StudentEnrollment, StudentSession } from "../types";
@@ -17,6 +18,9 @@ interface Props {
 const SessionBadge = ({ session }: { session: StudentSession }) => {
   if (isSessionCompleted(session)) {
     return <span className="text-xs font-bold uppercase text-emerald-700">Completed</span>;
+  }
+  if (isSessionInProgress(session)) {
+    return <span className="text-xs font-bold uppercase text-emerald-700">In progress</span>;
   }
   if (isSessionUpcomingOrOngoing(session)) {
     return <span className="text-xs font-bold uppercase text-blue-700">Upcoming</span>;

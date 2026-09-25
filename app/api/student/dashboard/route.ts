@@ -7,6 +7,22 @@ export const dynamic = "force-dynamic";
 /* eslint-disable @typescript-eslint/no-explicit-any -- aggregates loosely
    shaped backend payloads; see types/index.ts DashboardData for the output */
 
+const sessionEndsAt = (s: any) => {
+  const end = new Date(s.date);
+  const [h, m] = String(s.endTime ?? "23:59").split(":").map(Number);
+  end.setHours(h || 23, Number.isFinite(m) ? m : 59, 59, 999);
+  return end.getTime();
+};
+
+const nextSessionOf = (sessions: any[]) =>
+  sessions
+    .filter(
+      (s) =>
+        !/^(completed|done|cancel+ed)$/i.test(String(s.status ?? "")) &&
+        sessionEndsAt(s) >= Date.now(),
+    )
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0] ?? null;
+
 export const GET = withErrorHandling("student/dashboard", async () => {
   // 1. Get current user (student)
   const { data: meData, response: meResponse } = await apiServer<{
@@ -146,7 +162,9 @@ export const GET = withErrorHandling("student/dashboard", async () => {
     transactions,
     payments,
     sessions,
-    nextSession: sessions.find((s) => s.status === "Upcoming") || null,
+    // Soonest session that hasn't ended (no session has status "Upcoming";
+    // they're "Confirmed" / "Completed")
+    nextSession: nextSessionOf(sessions),
     programs: [],
     learningPath,
     summary: {

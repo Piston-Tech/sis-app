@@ -51,6 +51,10 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   // output: "standalone"
   poweredByHeader: false,
+  // pdfkit reads its built-in font files (e.g. Helvetica.afm) from its own
+  // package folder at runtime; bundling rewrites that path and the invoice
+  // PDF fails with ENOENT. Load it from node_modules instead.
+  serverExternalPackages: ["pdfkit"],
   // No remote image hosts: every next/image src is local or a data: URL.
   images: { remotePatterns: [] },
   async headers() {

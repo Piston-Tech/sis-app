@@ -166,6 +166,12 @@ export const isSessionUpcomingOrOngoing = (session: StudentSession, now = Date.n
   return end ? end.getTime() >= now : false;
 };
 
+/** Started and not finished yet. */
+export const isSessionInProgress = (session: StudentSession, now = Date.now()) => {
+  const start = sessionStart(session);
+  return Boolean(start && start.getTime() <= now && isSessionUpcomingOrOngoing(session, now));
+};
+
 export const sortSessions = (sessions: StudentSession[]) =>
   sessions
     .slice()
