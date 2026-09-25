@@ -458,7 +458,14 @@ const SingleTransactionPage = () => {
               </div>
               <div className="pt-4 border-t border-zinc-100 flex justify-between items-center">
                 <dt className="text-sm font-bold text-zinc-900">Balance</dt>
-                <dd className="text-lg font-black text-rose-600">
+                {/* Red only when money is still owed */}
+                <dd
+                  className={`text-lg font-black ${
+                    Number(transaction.balance) > 0
+                      ? "text-rose-600"
+                      : "text-emerald-600"
+                  }`}
+                >
                   {naira(transaction.balance)}
                 </dd>
               </div>
