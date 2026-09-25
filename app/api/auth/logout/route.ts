@@ -1,18 +1,12 @@
+import { withErrorHandling } from "@/lib/api/respond";
 import { logoutUser } from "@/services/apiServer";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 
-export async function POST(request: NextRequest) {
-  try {
-    await logoutUser();
+export const POST = withErrorHandling("auth/logout", async () => {
+  await logoutUser();
 
-    return NextResponse.json(
-      { message: "Logged out successfully", success: true },
-      { status: 200 },
-    );
-  } catch (error) {
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
-  }
-}
+  return NextResponse.json(
+    { message: "Logged out successfully", success: true },
+    { status: 200 },
+  );
+});

@@ -1,32 +1,11 @@
-import apiServer from "@/services/apiServer";
-import { NextRequest, NextResponse } from "next/server";
+import { forwardTo } from "@/lib/api/forward";
+import { withErrorHandling } from "@/lib/api/respond";
+import { NextRequest } from "next/server";
 
-export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json();
-
-    const { data: res, response } = await apiServer({
-      url: "/admin/auth/login",
-      method: "POST",
-      body,
-    });
-
-    if (response.status === 200) {
-      const { user, message, success } = res;
-
-      return NextResponse.json(
-        { user, message, success },
-        { status: response.status },
-      );
-    }
-
-    console.log(res, response.status);
-
-    return NextResponse.json(res, { status: response.status });
-  } catch (error) {
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
-  }
-}
+// Tokens in the backend response are stored as httpOnly cookies by apiServer
+// and stripped from the JSON sent to the browser.
+export const POST = withErrorHandling(
+  "admin/auth/login",
+  (request: NextRequest) =>
+    forwardTo(request, { url: "/admin/auth/login", authenticateAs: null }),
+);

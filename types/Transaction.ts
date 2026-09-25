@@ -12,9 +12,5 @@ export default interface Transaction {
 
 export type CreateTransactionData = Omit<
   Transaction,
-  | "id"
-  | "transactionId"
-  | "nextPaymentDate"
-  | "createdAt"
-  | "updatedAt"
+  "id" | "transactionId" | "nextPaymentDate" | "createdAt" | "updatedAt"
 >;

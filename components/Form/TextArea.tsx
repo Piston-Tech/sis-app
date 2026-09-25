@@ -1,37 +1,51 @@
+import cn from "@/utils/cn";
 import { ChangeEventHandler, TextareaHTMLAttributes } from "react";
+import ErrorMsg from "./ErrorMsg";
+import { fieldClass, labelClass, useFieldIds } from "./fieldProps";
 
-interface TextAreaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
+interface TextAreaProps extends Omit<
+  TextareaHTMLAttributes<HTMLTextAreaElement>,
+  "value" | "onChange"
+> {
   data: Record<string, any>;
   name: string;
   label: string;
   setData: (data: any) => void;
+  error?: string | null;
 }
 
-const TextArea = ({ label, name, data, setData }: TextAreaProps) => {
-  const value = data[name];
-  const onChange: ChangeEventHandler<
-    HTMLTextAreaElement,
-    HTMLTextAreaElement
-  > = (e) => {
-    const newData: Record<string, any> = {};
-    newData[name] = e.target.value;
+const TextArea = ({
+  label,
+  name,
+  data,
+  setData,
+  error,
+  id,
+  className,
+  ...props
+}: TextAreaProps) => {
+  const { inputId, errorId, aria } = useFieldIds(id, error);
+  const value = data[name] ?? "";
 
-    setData({
-      ...data,
-      ...newData,
-    });
+  const onChange: ChangeEventHandler<HTMLTextAreaElement> = (e) => {
+    setData({ ...data, [name]: e.target.value });
   };
 
   return (
     <div className="space-y-1">
-      <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">
+      <label htmlFor={inputId} className={labelClass}>
         {label}
       </label>
       <textarea
-        className="w-full px-4 py-2 bg-white border border-zinc-100 rounded-xl text-sm"
+        id={inputId}
+        name={name}
+        className={cn(fieldClass, className)}
         value={value}
         onChange={onChange}
+        {...aria}
+        {...props}
       ></textarea>
+      <ErrorMsg id={errorId} message={error} />
     </div>
   );
 };

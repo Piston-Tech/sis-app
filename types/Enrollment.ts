@@ -14,12 +14,7 @@ export default interface Enrollment {
 
 export type CreateEnrollmentData = Pick<
   Enrollment,
-  | "studentId"
-  | "classId"
-  | "cba"
-  | "delivery"
-  | "tierId"
-  | "status"
+  "studentId" | "classId" | "cba" | "delivery" | "tierId" | "status"
 > & {
   transactionId?: number;
 };

@@ -14,6 +14,16 @@ import Session from "./Session";
 import Tier from "./Tier";
 import SelectedClassSearch from "./SelectedClassSearch";
 import Payment from "./Payment";
+import CompanyContact, { BillingContactSummary } from "./CompanyContact";
+import type {
+  ApiError,
+  ApiResponse,
+  ApiSuccess,
+  FieldErrors,
+  ListQuery,
+  Paginated,
+  Pagination,
+} from "./Api";
 
 export enum UserRole {
   JOB_SEEKER = "JOB_SEEKER",
@@ -52,14 +62,6 @@ export interface Resource {
   downloadUrl: string;
 }
 
-export interface CorporateAccount {
-  id: string;
-  name: string;
-  adminName: string;
-  employeeCount: number;
-  subscriptionEnd: string;
-}
-
 export interface AppNotification {
   id: string;
   title: string;
@@ -90,17 +92,6 @@ export interface LearningPath {
     refId: string; // Course ID or other
     isCompleted: boolean;
   }[];
-}
-
-export interface AdminAttributes {
-  id: number;
-  email: string;
-  passwordHash: string;
-  firstName?: string;
-  lastName?: string;
-  role: string;
-  createdAt?: Date;
-  updatedAt?: Date;
 }
 
 export interface ClassAttributes {
@@ -227,7 +218,6 @@ export interface StudentAttributes {
   middleName: string;
   lastName: string;
   email: string;
-  passwordHash: string;
   phone: string;
   companyId: number;
   membershipTier: string;
@@ -260,16 +250,6 @@ export interface TransactionAttributes {
   nextPaymentDate: Date;
   payments?: PaymentAttributes[];
   enrollments?: EnrollmentAttributes[];
-  createdAt?: Date;
-  updatedAt?: Date;
-}
-
-export interface UserAttributes {
-  id: number;
-  email: string;
-  passwordHash: string;
-  firstName: string;
-  lastName: string;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -312,4 +292,13 @@ export type {
   Tier,
   SelectedClassSearch,
   Payment,
+  CompanyContact,
+  BillingContactSummary,
+  ApiError,
+  ApiResponse,
+  ApiSuccess,
+  FieldErrors,
+  ListQuery,
+  Paginated,
+  Pagination,
 };

@@ -1,7 +1,9 @@
+import { toNextResponse } from "@/lib/api/forward";
+import { withErrorHandling } from "@/lib/api/respond";
 import apiServer from "@/services/apiServer";
-import { NextResponse } from "next/server";
 
-export async function GET() {
-  const { data, response } = await apiServer({ url: "/students/referrals" });
-  return NextResponse.json(data, { status: response.status });
-}
+export const dynamic = "force-dynamic";
+
+export const GET = withErrorHandling("student/referrals", async () =>
+  toNextResponse(await apiServer({ url: "/students/referrals" })),
+);

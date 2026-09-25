@@ -5,7 +5,6 @@ type StudentCreationErrors = Record<
     Student,
     | "id"
     | "studentId"
-    | "passwordHash"
     | "companyId"
     | "membershipTier"
     | "persona"

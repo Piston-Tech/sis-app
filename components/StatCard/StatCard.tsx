@@ -1,7 +1,8 @@
 import cn from "@/utils/cn";
 import Card from "../Card";
+import type { LucideIcon } from "lucide-react";
 
-const StatCard = ({ label, value, icon: Icon, trend }: { label: string, value: string | number, icon: any, trend?: string }) => (
+const StatCard = ({ label, value, icon: Icon, trend }: { label: string, value: string | number, icon: LucideIcon, trend?: string }) => (
   <Card className="flex-1">
     <div className="flex items-start justify-between">
       <div>

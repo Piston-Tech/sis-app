@@ -9,7 +9,7 @@ import { ErrorMsg } from "@/components/Form";
 const AdminLogin = () => {
   const { login } = useAdminAuth();
 
-  const [email, setEmail] = useState("admin@pistonandfusion.org");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
   const [error, setError] = useState("");
@@ -22,9 +22,11 @@ const AdminLogin = () => {
 
     setLoading(true);
 
-    login({ email, password } as AdminLoginCredentials, setErrors).finally(() =>
-      setLoading(false),
-    );
+    login(
+      { email, password } as AdminLoginCredentials,
+      setErrors,
+      setError,
+    ).finally(() => setLoading(false));
   };
 
   return (
@@ -46,54 +48,66 @@ const AdminLogin = () => {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {error && (
-            <div className="p-4 bg-rose-50 text-rose-600 text-sm rounded-xl font-medium border border-rose-100">
+            <div
+              role="alert"
+              className="p-4 bg-rose-50 text-rose-600 text-sm rounded-xl font-medium border border-rose-100"
+            >
               {error}
             </div>
           )}
           <div className="space-y-2">
-            <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest">
+            <label
+              htmlFor="admin-email"
+              className="text-xs font-bold text-zinc-500 uppercase tracking-widest"
+            >
               Email Address
             </label>
             <input
+              id="admin-email"
               type="email"
+              autoComplete="username"
+              aria-invalid={errors.email ? true : undefined}
+              aria-describedby={errors.email ? "admin-email-error" : undefined}
               required
               className="w-full px-5 py-3 bg-zinc-50 border border-zinc-200 text-zinc-600 placeholder:text-zinc-400 rounded-xl focus:outline-none focus:ring-2 focus:ring-black/5 transition-all"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="user@pistonandfusion.org"
             />
-            <ErrorMsg message={errors.email} />
+            <ErrorMsg id="admin-email-error" message={errors.email} />
           </div>
           <div className="space-y-2">
-            <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest">
+            <label
+              htmlFor="admin-password"
+              className="text-xs font-bold text-zinc-500 uppercase tracking-widest"
+            >
               Password
             </label>
             <input
+              id="admin-password"
               type="password"
+              autoComplete="current-password"
+              aria-invalid={errors.password ? true : undefined}
+              aria-describedby={
+                errors.password ? "admin-password-error" : undefined
+              }
               required
               className="w-full px-5 py-3 bg-zinc-50 border border-zinc-200 text-zinc-600 placeholder:text-zinc-400 rounded-xl focus:outline-none focus:ring-2 focus:ring-black/5 transition-all"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
             />
-            <ErrorMsg message={errors.password} />
+            <ErrorMsg id="admin-password-error" message={errors.password} />
           </div>
           <button
             type="submit"
             disabled={loading}
+            aria-busy={loading || undefined}
             className="w-full py-4 bg-black text-white rounded-xl font-bold hover:bg-zinc-800 transition-all shadow-lg shadow-black/10 disabled:opacity-50"
           >
             {loading ? "Authenticating..." : "Sign In"}
           </button>
         </form>
-
-        {/* <div className="mt-8 pt-8 border-t border-zinc-50 text-center">
-          <p className="text-xs text-zinc-400">
-            For demo purposes, use{" "}
-            <span className="font-bold text-zinc-600">admin@pf.com</span> /{" "}
-            <span className="font-bold text-zinc-600">admin123</span>
-          </p>
-        </div> */}
       </motion.div>
     </div>
   );

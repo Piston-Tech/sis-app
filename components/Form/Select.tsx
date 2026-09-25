@@ -1,54 +1,70 @@
+import cn from "@/utils/cn";
 import { ChangeEventHandler, SelectHTMLAttributes } from "react";
 import ErrorMsg from "./ErrorMsg";
+import { fieldClass, labelClass, useFieldIds } from "./fieldProps";
 
-interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
+export type SelectOption = string | { value: string | number; title: string };
+
+interface SelectProps extends Omit<
+  SelectHTMLAttributes<HTMLSelectElement>,
+  "value" | "onChange"
+> {
   label: string;
   name: string;
-  options: Array<string | { value: string | number; title: string }>;
+  options: SelectOption[];
   data: Record<string, any>;
   setData: (data: any) => void;
-  error: string | undefined;
+  error?: string | null;
+  placeholder?: string;
 }
 
-const Select = ({ label, name, options, data, setData }: SelectProps) => {
-  const value = data[name];
+const Select = ({
+  label,
+  name,
+  options,
+  data,
+  setData,
+  error,
+  id,
+  className,
+  placeholder = "- None -",
+  ...props
+}: SelectProps) => {
+  const { inputId, errorId, aria } = useFieldIds(id, error);
+  const value = data[name] ?? "";
 
-  const onChange: ChangeEventHandler<HTMLSelectElement, HTMLSelectElement> = (
-    e,
-  ) => {
-    const newData: Record<string, any> = {};
-    newData[name] = e.target.value;
-
-    setData({
-      ...data,
-      ...newData,
-    });
+  const onChange: ChangeEventHandler<HTMLSelectElement> = (e) => {
+    setData({ ...data, [name]: e.target.value });
   };
 
   return (
     <div className="space-y-1">
-      <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">
+      <label htmlFor={inputId} className={labelClass}>
         {label}
       </label>
       <select
-        className="w-full px-4 py-2 bg-white border border-zinc-100 rounded-xl text-sm"
+        id={inputId}
+        name={name}
+        className={cn(fieldClass, className)}
         value={value}
         onChange={onChange}
+        {...aria}
+        {...props}
       >
-        <option value="">- None -</option>
-        {options.map((o, i) => {
-          return typeof o === "string" ? (
-            <option key={i} value={o}>
+        <option value="">{placeholder}</option>
+        {options.map((o) =>
+          typeof o === "string" ? (
+            <option key={o} value={o}>
               {o}
             </option>
           ) : (
-            <option key={i} value={o.value}>
+            <option key={String(o.value)} value={o.value}>
               {o.title}
             </option>
-          );
-        })}
+          ),
+        )}
       </select>
-      {data.error && <ErrorMsg message={data.error} />}
+      <ErrorMsg id={errorId} message={error} />
     </div>
   );
 };

@@ -1,5 +1,5 @@
-import { ErrorMsg } from "@/components/Form";
 import StudentCreationErrors from "@/types/StudentCreationError";
+import { AuthField, FieldError, FormAlert, inputClass, labelClass, primaryButtonClass } from "./fields";
 
 interface AuthCreateAccountProps {
   handleCreateAccount: (e: React.FormEvent) => void;
@@ -44,16 +44,17 @@ const AuthCreateAccount = ({
 }: AuthCreateAccountProps) => {
   return (
     <form onSubmit={handleCreateAccount} className="space-y-4">
-      <div className="flex gap-4">
-        <div className="text-left w-max">
-          <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-2 block">
-            Prefix (Optional)
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-[8rem_1fr]">
+        <div className="text-left">
+          <label htmlFor="signup-prefix" className={labelClass}>
+            Prefix <span className="font-medium normal-case text-slate-500">(optional)</span>
           </label>
           <select
-            required
+            id="signup-prefix"
             value={prefix}
             onChange={(e) => setPrefix(e.target.value)}
-            className="w-full py-4 px-6 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-medium"
+            aria-describedby={errors.prefix ? "signup-prefix-error" : undefined}
+            className={inputClass}
           >
             <option value="">None</option>
             <option value="Mr.">Mr.</option>
@@ -61,102 +62,75 @@ const AuthCreateAccount = ({
             <option value="Mrs.">Mrs.</option>
             <option value="Dr.">Dr.</option>
           </select>
-          <ErrorMsg message={errors.prefix} />
+          <FieldError id="signup-prefix-error" message={errors.prefix} />
         </div>
-        <div className="text-left flex-1">
-          <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-2 block">
-            First Name
-          </label>
-          <input
-            type="text"
-            required
-            value={firstName}
-            onChange={(e) => setFirstName(e.target.value)}
-            placeholder="John"
-            className="w-full py-4 px-6 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-medium"
-          />
-          <ErrorMsg message={errors.firstName} />
-        </div>
-      </div>
-      <div className="flex gap-4">
-        <div className="text-left">
-          <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-2 block">
-            Middle Name (Optional)
-          </label>
-          <input
-            type="text"
-            required
-            value={middleName}
-            onChange={(e) => setMiddleName(e.target.value)}
-            placeholder="Michael"
-            className="w-full py-4 px-6 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-medium"
-          />
-          <ErrorMsg message={errors.middleName} />
-        </div>
-        <div className="text-left">
-          <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-2 block">
-            Last Name
-          </label>
-          <input
-            type="text"
-            required
-            value={lastName}
-            onChange={(e) => setLastName(e.target.value)}
-            placeholder="Doe"
-            className="w-full py-4 px-6 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-medium"
-          />
-          <ErrorMsg message={errors.lastName} />
-        </div>
-      </div>
-      <div className="text-left">
-        <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-2 block">
-          Phone Number (Optional)
-        </label>
-        <input
-          type="tel"
+        <AuthField
+          id="signup-first-name"
+          label="First name"
+          type="text"
+          autoComplete="given-name"
           required
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
-          placeholder="+2348012345678"
-          className="w-full py-4 px-6 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-medium"
+          value={firstName}
+          onChange={(e) => setFirstName(e.target.value)}
+          error={errors.firstName}
         />
-        <ErrorMsg message={errors.phone} />
       </div>
-      <div className="text-left">
-        <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-2 block">
-          Create a Password
-        </label>
-        <input
-          type="password"
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <AuthField
+          id="signup-middle-name"
+          label="Middle name"
+          optional
+          type="text"
+          autoComplete="additional-name"
+          value={middleName}
+          onChange={(e) => setMiddleName(e.target.value)}
+          error={errors.middleName}
+        />
+        <AuthField
+          id="signup-last-name"
+          label="Last name"
+          type="text"
+          autoComplete="family-name"
           required
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="••••••••"
-          className="w-full py-4 px-6 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-medium"
+          value={lastName}
+          onChange={(e) => setLastName(e.target.value)}
+          error={errors.lastName}
         />
-        <ErrorMsg message={errors.password} />
       </div>
-      <div className="text-left">
-        <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-2 block">
-          Confirm Password
-        </label>
-        <input
-          type="password"
-          required
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
-          placeholder="••••••••"
-          className="w-full py-4 px-6 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-medium"
-        />
-        <ErrorMsg message={errors.confirmPassword} />
-      </div>
-      {error && <p className="text-xs text-red-500 font-bold">{error}</p>}
-      <button
-        disabled={isSubmitting}
-        type="submit"
-        className="w-full py-4 bg-blue-600 text-white rounded-2xl font-black hover:bg-blue-700 transition-all shadow-lg disabled:opacity-50"
-      >
-        {isSubmitting ? "Creating..." : "Create Account"}
+      <AuthField
+        id="signup-phone"
+        label="Phone number"
+        optional
+        type="tel"
+        autoComplete="tel"
+        value={phone}
+        onChange={(e) => setPhone(e.target.value)}
+        placeholder="+2348012345678"
+        error={errors.phone}
+      />
+      <AuthField
+        id="signup-password"
+        label="Create a password"
+        type="password"
+        autoComplete="new-password"
+        required
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        error={errors.password}
+      />
+      <AuthField
+        id="signup-confirm-password"
+        label="Confirm password"
+        type="password"
+        autoComplete="new-password"
+        required
+        value={confirmPassword}
+        onChange={(e) => setConfirmPassword(e.target.value)}
+        error={errors.confirmPassword}
+      />
+      <FormAlert message={error || errors.email || errors.verificationToken} />
+      <button disabled={isSubmitting} type="submit" className={primaryButtonClass}>
+        {isSubmitting ? "Creating..." : "Create account"}
       </button>
     </form>
   );

@@ -1,60 +1,52 @@
-import apiServer, {
-  getUserAccessToken,
-  getUserDetails,
-} from "@/services/apiServer";
-import { cookies } from "next/headers";
-import { NextRequest, NextResponse } from "next/server";
+import {
+  InvalidJsonBodyError,
+  readJsonBody,
+  toNextResponse,
+} from "@/lib/api/forward";
+import { errorResponse, withErrorHandling } from "@/lib/api/respond";
+import apiServer from "@/services/apiServer";
+import { NextRequest } from "next/server";
 
-export async function GET(request: NextRequest) {
-  try {
-    const { data, response } = await apiServer({
-      url: "/auth/me",
-      method: "GET",
-    });
+export const dynamic = "force-dynamic";
 
-    if (response.status === 200) {
-      const { user, message, success } = data;
+// Current student (apiServer refreshes the userDetails cookie on success)
+export const GET = withErrorHandling("user/me", async () =>
+  toNextResponse(await apiServer({ url: "/auth/me", method: "GET" })),
+);
 
-      return NextResponse.json(
-        { user, message, success },
-        { status: response.status },
-      );
+export const PUT = withErrorHandling(
+  "user/update",
+  async (request: NextRequest) => {
+    let body: unknown;
+    try {
+      body = await readJsonBody(request);
+    } catch (error) {
+      if (error instanceof InvalidJsonBodyError) {
+        return errorResponse(400, error.message);
+      }
+      throw error;
     }
 
-    return NextResponse.json(data, { status: response.status });
-  } catch (error) {
-    console.log(error);
-    return NextResponse.json(
-      { error: "Internal server error", data: error, success: false },
-      { status: 500 },
-    );
-  }
-}
+    if (typeof body !== "object" || body === null || Array.isArray(body)) {
+      return errorResponse(400, "Expected a JSON object");
+    }
 
-export async function PUT(request: NextRequest) {
-  try {
-    const body = await request.json();
+    // The backend identifies the student from the access token, so never
+    // forward a client-supplied id.
+    const { id: _ignoredId, ...profile } = body as Record<string, unknown>;
 
-    const { data, response } = await apiServer({
-      url: `/students/${body.id}`,
+    const result = await apiServer({
+      url: "/students/me",
       method: "PUT",
-      body,
+      body: profile,
     });
 
-    if (response.status === 200) {
-      const { student, message, success } = data;
-
-      return NextResponse.json(
-        { user: student, message, success },
-        { status: response.status },
-      );
+    // Callers read `user`; the backend returns the profile as `student`.
+    // Every other key is passed through.
+    if (result.response.ok && !result.blob && result.data.student) {
+      result.data = { ...result.data, user: result.data.student };
     }
 
-    return NextResponse.json(data, { status: response.status });
-  } catch (error) {
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
-  }
-}
+    return toNextResponse(result);
+  },
+);

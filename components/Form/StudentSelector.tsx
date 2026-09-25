@@ -1,86 +1,46 @@
-import useStudentselector from "@/hooks/useStudentSelector";
-import { Trash, Trash2 } from "lucide-react";
-import ErrorMsg from "./ErrorMsg";
+import { Student } from "@/types";
+import SearchSelect from "./SearchSelect";
 
-export default function Studentselector({
+export type StudentOption = Pick<
+  Student,
+  | "id"
+  | "studentId"
+  | "firstName"
+  | "middleName"
+  | "lastName"
+  | "email"
+  | "phone"
+>;
+
+export default function StudentSelector({
   value,
   onChange,
   error,
   disabled,
+  label = "Select Student",
 }: {
   value: number | undefined;
   onChange: (id: number) => void;
-  error: string | undefined;
+  error?: string | null;
   disabled?: boolean;
+  label?: string;
 }) {
-  const {
-    searchTerm,
-    setSearchTerm,
-    options,
-    onSelected,
-    isSearching,
-    selectedStudent,
-  } = useStudentselector(value);
-
   return (
-    <div className="relative w-full max-w-md">
-      <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">
-        Select Student
-      </label>
-
-      <input
-        type="text"
-        disabled={disabled}
-        className="w-full px-4 py-2 bg-white border border-zinc-100 rounded-xl text-sm"
-        placeholder="Search by code or title (e.g. CS101)"
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-      />
-
-      {isSearching && (
-        <div className="absolute right-3 top-9 text-xs text-gray-400">
-          Searching...
-        </div>
+    <SearchSelect<StudentOption>
+      resource="students"
+      label={label}
+      placeholder="Search by name, email or student ID"
+      value={value}
+      disabled={disabled}
+      error={error}
+      onSelect={(s) => onChange(s.id)}
+      renderOption={(s) => (
+        <>
+          <span className="font-semibold">{s.studentId}</span> - {s.firstName}{" "}
+          {s.middleName ? `${s.middleName} ` : ""}
+          {s.lastName}
+        </>
       )}
-
-      {selectedStudent && (
-        <div
-          className="flex justify-between border border-neutral-300 rounded-lg mt-2 select-none py-2 px-3"
-          //   onClick={() => {
-          //     onChange(value.id);
-          //     onSelected(student);
-          //   }}
-        >
-          <p>
-            <span className="font-semibold">{selectedStudent.studentId}</span> -{" "}
-            {selectedStudent.firstName} {selectedStudent.middleName}{" "}
-            {selectedStudent.lastName}
-          </p>
-          {/* <button type="button" onClick={() => onChange()} className="cursor-pointer">
-            <Trash2 size={16} className="stroke-red-500" />
-          </button> */}
-        </div>
-      )}
-
-      <ErrorMsg message={error} />
-
-      {options.length > 0 && (
-        <ul className="absolute z-10 mt-1 max-height-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
-          {options.map((student) => (
-            <li
-              key={student.id}
-              className="relative cursor-pointer select-none py-2 pl-3 pr-9 hover:bg-indigo-600 hover:text-white"
-              onClick={() => {
-                onChange(student.id);
-                onSelected(student);
-              }}
-            >
-              <span className="font-semibold">{student.studentId}</span> -{" "}
-              {student.firstName} {student.middleName} {student.lastName}
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
+    />
   );
 }

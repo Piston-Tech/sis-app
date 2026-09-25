@@ -1,9 +1,33 @@
 // proxy.ts
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { checkCsrf } from "@/lib/api/csrf";
+
+const isApiPath = (pathname: string) =>
+  pathname === "/api" || pathname.startsWith("/api/");
 
 export function proxy(request: NextRequest) {
   const url = request.nextUrl;
+
+  // /api route handlers: CSRF check only. They are served identically on
+  // every host and must never go through the subdomain rewrite below.
+  if (isApiPath(url.pathname)) {
+    const csrf = checkCsrf({
+      method: request.method,
+      pathname: url.pathname,
+      headers: request.headers,
+    });
+
+    if (!csrf.ok) {
+      return NextResponse.json(
+        { success: false, error: csrf.error },
+        { status: csrf.status },
+      );
+    }
+
+    return NextResponse.next();
+  }
+
   const hostname = request.headers.get("host") || "";
 
   const domain = process.env.NEXT_PUBLIC_DOMAIN_NAME;
@@ -13,10 +37,32 @@ export function proxy(request: NextRequest) {
   const allowedDomains: string[] = [];
   const currentHost = hostname.replace(`.${domain}`, "");
 
-  console.log(domain);
-  console.log(currentHost);
+  if (
+    allowedDomains.includes(hostname) ||
+    currentHost === "www" ||
+    hostname === domain
+  ) {
+    // The subdomain folders must never be served directly on www / the bare
+    // domain (that would skip the session checks below): send them to their
+    // own subdomain instead.
+    const [first = "", ...rest] = url.pathname.split("/").filter(Boolean);
+    let section: string;
+    try {
+      section = decodeURIComponent(first).toLowerCase();
+    } catch {
+      return new NextResponse(null, { status: 404 });
+    }
+    if (section === "admin" || section === "app") {
+      if (!domain) return new NextResponse(null, { status: 404 });
 
-  if (allowedDomains.includes(hostname) || currentHost === "www") {
+      const protocol =
+        request.headers.get("x-forwarded-proto")?.split(",")[0] ||
+        url.protocol.replace(":", "");
+      return NextResponse.redirect(
+        `${protocol}://${section}.${domain}/${rest.join("/")}${url.search}`,
+      );
+    }
+
     return NextResponse.next();
   } else {
     const session = request.cookies.get("refreshToken")?.value;
@@ -52,8 +98,11 @@ export function proxy(request: NextRequest) {
 // Optionally, use a matcher to restrict when the proxy runs
 export const config = {
   matcher: [
+    // /api runs only the CSRF check at the top of proxy() (never rewritten)
+    "/api/:path*",
     "/((?!api|_next/static|_next/image|favicon.ico|.*\\..*).*)",
     "/admin/:path*",
+    "/app/:path*",
     "/profile/:path*",
   ],
 };
