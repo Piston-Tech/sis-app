@@ -24,4 +24,15 @@ jobs:
       - run: yarn test
       - run: yarn build
       - name: Audit production dependencies
-        run: yarn audit --groups dependencies --level high
+        # Yarn 1's --level only filters the report: the exit code is a bitmask
+        # of every severity found (1 info, 2 low, 4 moderate, 8 high,
+        # 16 critical). Fail only on high or critical.
+        run: |
+          set +e
+          yarn audit --groups dependencies --level high
+          status=$?
+          set -e
+          if [ $((status & 24)) -ne 0 ]; then
+            echo "High or critical vulnerabilities found (exit $status)"
+            exit 1
+          fi
