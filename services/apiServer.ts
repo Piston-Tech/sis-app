@@ -125,7 +125,12 @@ const sendRequest = async <T>(
       : setUserRefreshToken(refreshToken));
   }
 
-  if ((url.includes("/auth/login") || url.includes("/auth/me")) && res.user) {
+  if (
+    (url.includes("/auth/login") ||
+      url.includes("/auth/me") ||
+      url.includes("/auth/change-password")) &&
+    res.user
+  ) {
     await (isAdminUrl
       ? setAdminDetails(JSON.stringify(res.user))
       : setUserDetails(JSON.stringify(res.user)));

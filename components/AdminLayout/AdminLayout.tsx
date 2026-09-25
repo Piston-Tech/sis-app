@@ -13,6 +13,8 @@ import {
   Menu,
   Banknote,
   Sparkles,
+  ShieldCheck,
+  UserCog,
   X,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
@@ -24,7 +26,7 @@ import { ACCESS_LEVEL_LABELS } from "@/utils/adminAccess";
 import Link from "next/link";
 
 // Only routes that exist under app/admin/(portal).
-const navigation = [
+const mainNavigation = [
   { to: "/", icon: LayoutDashboard, label: "Dashboard" },
   { to: "/courses", icon: BookOpen, label: "Courses" },
   { to: "/foundation", icon: Sparkles, label: "Foundations" },
@@ -34,6 +36,9 @@ const navigation = [
   { to: "/transactions", icon: CreditCard, label: "Transactions" },
   { to: "/payments", icon: Banknote, label: "Payments" },
 ];
+// Super admins only (the backend enforces it too)
+const adminsItem = { to: "/admins", icon: ShieldCheck, label: "Admins" };
+const accountItem = { to: "/account", icon: UserCog, label: "My Account" };
 
 const initials = (name: string) =>
   name
@@ -45,7 +50,12 @@ const initials = (name: string) =>
 
 const AdminLayout = ({ children }: { children: React.ReactNode }) => {
   const { logout } = useAdminAuth();
-  const { currentUser, accessLevel } = useAdminGlobal();
+  const { currentUser, accessLevel, canManageAdmins } = useAdminGlobal();
+  const navigation = [
+    ...mainNavigation,
+    ...(canManageAdmins ? [adminsItem] : []),
+    accountItem,
+  ];
   const pathname = usePathname() ?? "/";
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);

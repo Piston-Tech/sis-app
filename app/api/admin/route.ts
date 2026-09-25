@@ -1,6 +1,7 @@
-import { toNextResponse } from "@/lib/api/forward";
+import { forwardTo, toNextResponse } from "@/lib/api/forward";
 import { withErrorHandling } from "@/lib/api/respond";
 import apiServer from "@/services/apiServer";
+import { NextRequest } from "next/server";
 
 export const dynamic = "force-dynamic";
 
@@ -16,4 +17,9 @@ export const GET = withErrorHandling("admin/me", async () =>
       authenticateAs: "admin",
     }),
   ),
+);
+
+// The admin edits their own name ({ firstName, lastName })
+export const PUT = withErrorHandling("admin/me:update", (request: NextRequest) =>
+  forwardTo(request, { url: "/admin/auth/me", authenticateAs: "admin" }),
 );

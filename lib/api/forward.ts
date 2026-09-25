@@ -125,6 +125,16 @@ export const FORWARD_RULES: Readonly<Record<Audience, AudienceRule>> = {
           { pattern: [":id", "receipt.pdf"], methods: ["GET"] },
         ],
       },
+      // Admin accounts (superadmin only, enforced by the backend):
+      // /admins, /admins/search, /admins/:id
+      admins: {
+        methods: ["GET", "POST", "PUT"],
+        subRoutes: [
+          { pattern: [":id", "reset-link"], methods: ["POST"] },
+          { pattern: [":id", "temporary-password"], methods: ["POST"] },
+          { pattern: [":id", "sign-out"], methods: ["POST"] },
+        ],
+      },
       // /foundation/{programs,cohorts,applications}[/:id]
       foundation: {
         methods: ["GET", "POST", "PUT", "PATCH"],

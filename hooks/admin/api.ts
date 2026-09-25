@@ -10,7 +10,8 @@ export type AdminResource =
   | "transactions"
   | "payments"
   | "enrollments"
-  | "tiers";
+  | "tiers"
+  | "admins";
 
 export interface Pagination {
   page: number;
